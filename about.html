@@ -18,8 +18,13 @@
       document.documentElement.setAttribute("data-theme", theme);
     })();
   </script>
+  <style>
+    body[data-auth-state="pending"] .page-layout {
+      visibility: hidden !important;
+    }
+  </style>
 </head>
-<body class="about-body page-frame" data-page="about">
+<body class="about-body page-frame" data-page="about" data-auth-state="pending">
   <div id="sidebarRoot"></div>
 
   <div class="page-layout">
