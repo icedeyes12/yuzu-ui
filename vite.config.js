@@ -58,8 +58,12 @@ export default defineConfig({
 	server: {
 		port: 5173,
 		proxy: {
-			// Everything under /api (v1 routes plus the /api/auth OAuth callback
-			// compatibility path) proxies to the local FastAPI backend.
+			// Everything under /v1 (plus legacy /api compatibility path)
+			// proxies to the local FastAPI backend.
+			"/v1": {
+				target: "http://localhost:5000",
+				changeOrigin: true,
+			},
 			"/api": {
 				target: "http://localhost:5000",
 				changeOrigin: true,

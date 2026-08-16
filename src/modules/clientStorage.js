@@ -1,4 +1,4 @@
-// Storage namespace is resolved lazily from /api/v1/auth/me instead of a
+// Storage namespace is resolved lazily from /v1/auth/me instead of a
 // server-rendered <meta name="user-id"> tag, so module state is mutable.
 let storageNamespace = "";
 

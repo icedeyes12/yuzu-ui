@@ -24,7 +24,7 @@ import {
  */
 async function loadCurrentSessionName() {
 	try {
-		const response = await apiFetch("/api/v1/profile", {
+		const response = await apiFetch("/v1/profile", {
 			headers: { Accept: "application/json" },
 		});
 		if (!response.ok)
@@ -72,7 +72,7 @@ async function initializeChat() {
 
 		let sessionId = urlSessionId;
 		if (!sessionId) {
-			const profileResponse = await apiFetch("/api/v1/profile", {
+			const profileResponse = await apiFetch("/v1/profile", {
 				headers: { Accept: "application/json" },
 			});
 			if (!profileResponse.ok)
@@ -89,7 +89,7 @@ async function initializeChat() {
 		}
 
 		// Initialize multimodal from the same canonical model metadata as config.
-		const configResponse = await apiFetch("/api/v1/config", {
+		const configResponse = await apiFetch("/v1/config", {
 			headers: { Accept: "application/json" },
 		});
 		const config = configResponse.ok ? await configResponse.json() : {};

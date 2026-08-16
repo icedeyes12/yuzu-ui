@@ -8,7 +8,7 @@ export function getCachedMe() {
 }
 
 /**
- * Fetch /api/v1/auth/me, cache the identity, and derive the user-scoped
+ * Fetch /v1/auth/me, cache the identity, and derive the user-scoped
  * storage namespace (user_{user_id}) used for BYOK keys, theme, and caches.
  * @param {{ redirectOnUnauthorized?: boolean }} [options]
  * @returns {Promise<object|null>} The /me payload, or null when unauthenticated.
@@ -16,7 +16,7 @@ export function getCachedMe() {
 export async function bootstrapAuth({ redirectOnUnauthorized = true } = {}) {
 	if (cachedMe) return cachedMe;
 
-	const response = await apiFetch("/api/v1/auth/me", {
+	const response = await apiFetch("/v1/auth/me", {
 		headers: { Accept: "application/json" },
 	});
 

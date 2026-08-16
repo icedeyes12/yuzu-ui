@@ -2,7 +2,7 @@
 // profile/advanced/image-model/location forms, and Global Knowledge CRUD.
 // Differences from the Jinja version: fetch -> apiFetch (session cookie, BYOK
 // header, 401 auth gate) and the provider_models cache key resolves lazily
-// after /api/v1/auth/me establishes the user-scoped storage namespace.
+// after /v1/auth/me establishes the user-scoped storage namespace.
 
 import { toggleSidebar } from "../components/sidebar.js";
 import { bootApp } from "../main.js";
@@ -20,7 +20,7 @@ import { listProviders } from "../modules/provider-registry.js";
 import { escapeHtml } from "../modules/tool-renderer/dom-utils.js";
 import { renderLogo } from "../modules/visual-registry.js";
 
-// Global config state (populated from /api/v1/config)
+// Global config state (populated from /v1/config)
 let appConfig = null;
 
 const maskedProviderKeys = new WeakMap();
@@ -196,7 +196,7 @@ async function init() {
 // Load application configuration from backend (SSOT)
 async function loadAppConfig() {
 	try {
-		const response = await apiFetch("/api/v1/config", {
+		const response = await apiFetch("/v1/config", {
 			headers: { Accept: "application/json" },
 		});
 		const data = await readJsonResponse(response);
@@ -562,13 +562,10 @@ async function fetchModelsForProvider(provider) {
 		if (provConfig.base_url)
 			headers["X-Provider-BaseUrl"] = provConfig.base_url;
 
-		const response = await apiFetch(
-			`/api/v1/proxy/models/${provider}/refresh`,
-			{
-				method: "POST",
-				headers: { ...headers, Accept: "application/json" },
-			},
-		);
+		const response = await apiFetch(`/v1/proxy/models/${provider}/refresh`, {
+			method: "POST",
+			headers: { ...headers, Accept: "application/json" },
+		});
 		const data = await readJsonResponse(response);
 
 		if (!response.ok || data.status !== "success") {
@@ -634,7 +631,7 @@ async function testProviderConnection(providerName) {
 			console.warn("Error attaching BYOK config for test:", e);
 		}
 
-		const response = await apiFetch("/api/v1/providers/test_connection", {
+		const response = await apiFetch("/v1/providers/test_connection", {
 			method: "POST",
 			headers: headers,
 			body: JSON.stringify({ provider_name: providerName }),
@@ -869,7 +866,7 @@ async function saveImageModel() {
 
 	try {
 		const updates = { image_model: imageModel };
-		const response = await apiFetch("/api/v1/update_profile", {
+		const response = await apiFetch("/v1/update_profile", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ updates }),
@@ -914,7 +911,7 @@ async function setProviderActive(providerName) {
 	}
 
 	try {
-		const response = await apiFetch("/api/v1/providers/set_preferred", {
+		const response = await apiFetch("/v1/providers/set_preferred", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -995,7 +992,7 @@ async function saveProfileSettings() {
 	saveBtn.disabled = true;
 
 	try {
-		const response = await apiFetch("/api/v1/update_profile", {
+		const response = await apiFetch("/v1/update_profile", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
@@ -1084,7 +1081,7 @@ async function saveAdvancedSettings() {
 			enable_vision: getCheckedIfExists("adv-vision"),
 		};
 
-		const response = await apiFetch("/api/v1/update_profile", {
+		const response = await apiFetch("/v1/update_profile", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ updates }),
@@ -1122,7 +1119,7 @@ async function clearChatHistory() {
 	clearBtn.disabled = true;
 
 	try {
-		const response = await apiFetch("/api/v1/clear_chat", {
+		const response = await apiFetch("/v1/clear_chat", {
 			method: "POST",
 			headers: { Accept: "application/json" },
 		});
@@ -1209,7 +1206,7 @@ async function saveLocation() {
 	}
 
 	try {
-		const response = await apiFetch("/api/v1/update_location", {
+		const response = await apiFetch("/v1/update_location", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -1335,7 +1332,7 @@ async function loadGlobalKnowledge() {
 	const list = document.getElementById("global-knowledge-list");
 	if (!list) return;
 	try {
-		const response = await apiFetch("/api/v1/global-knowledge", {
+		const response = await apiFetch("/v1/global-knowledge", {
 			headers: { Accept: "application/json" },
 		});
 		const data = await readJsonResponse(response);
@@ -1432,8 +1429,8 @@ async function saveKnowledgeEntry(event) {
 	try {
 		const response = await apiFetch(
 			id
-				? `/api/v1/global-knowledge/${encodeURIComponent(id)}`
-				: "/api/v1/global-knowledge",
+				? `/v1/global-knowledge/${encodeURIComponent(id)}`
+				: "/v1/global-knowledge",
 			{
 				method: id ? "PUT" : "POST",
 				headers: {
@@ -1459,7 +1456,7 @@ async function deleteKnowledgeEntry(id) {
 	if (!window.confirm("Delete this Global Knowledge entry?")) return;
 	try {
 		const response = await apiFetch(
-			`/api/v1/global-knowledge/${encodeURIComponent(id)}`,
+			`/v1/global-knowledge/${encodeURIComponent(id)}`,
 			{ method: "DELETE", headers: { Accept: "application/json" } },
 		);
 		const data = await readJsonResponse(response);

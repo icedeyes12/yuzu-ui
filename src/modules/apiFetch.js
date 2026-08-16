@@ -6,9 +6,9 @@ import { loginUrl } from "./links.js";
 const API_BASE = (import.meta.env.VITE_API_BASE || "").replace(/\/+$/, "");
 
 const LLM_ENDPOINTS = [
-	"/api/v1/send_message",
-	"/api/v1/send_message_stream",
-	"/api/v1/generate_image",
+	"/v1/send_message",
+	"/v1/send_message_stream",
+	"/v1/generate_image",
 ];
 
 /**
@@ -90,11 +90,11 @@ export async function apiFetch(input, init = {}) {
 			const baseOrigin = API_BASE
 				? new URL(API_BASE, window.location.origin).origin
 				: window.location.origin;
-			if (url.origin === baseOrigin && url.pathname.includes("/api/v1/")) {
+			if (url.origin === baseOrigin && url.pathname.includes("/v1/")) {
 				redirectToLogin();
 			}
 		} catch {
-			if (targetUrl.includes("/api/v1/")) {
+			if (targetUrl.includes("/v1/")) {
 				redirectToLogin();
 			}
 		}

@@ -7,12 +7,12 @@ async function init() {
 	for (const link of document.querySelectorAll("[data-auth-provider]")) {
 		const provider = link.dataset.authProvider;
 		if (provider) {
-			link.href = apiUrl(`/api/v1/auth/login?provider=${provider}`);
+			link.href = apiUrl(`/v1/auth/login?provider=${provider}`);
 		}
 	}
 
 	// Already signed in? Skip the login page.
-	const response = await apiFetch("/api/v1/auth/me", {
+	const response = await apiFetch("/v1/auth/me", {
 		headers: { Accept: "application/json" },
 	});
 	if (response.ok) {

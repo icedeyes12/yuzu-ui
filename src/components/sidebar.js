@@ -256,8 +256,8 @@ function renderAuthenticated(container, data) {
 function renderUnauthenticated(container) {
 	container.innerHTML = `
 		<div class="auth-login-buttons">
-			<a class="auth-btn auth-google-btn" href="${apiUrl("/api/v1/auth/login?provider=google")}">${_GOOGLE_SVG} Sign in with Google</a>
-			<a class="auth-btn auth-github-btn" href="${apiUrl("/api/v1/auth/login?provider=github")}">${_GITHUB_SVG} Sign in with GitHub</a>
+			<a class="auth-btn auth-google-btn" href="${apiUrl("/v1/auth/login?provider=google")}">${_GOOGLE_SVG} Sign in with Google</a>
+			<a class="auth-btn auth-github-btn" href="${apiUrl("/v1/auth/login?provider=github")}">${_GITHUB_SVG} Sign in with GitHub</a>
 		</div>
 	`;
 }
@@ -284,7 +284,7 @@ async function renderAuthSection() {
 async function handleLogout() {
 	clearUserScopedStorage();
 	try {
-		await apiFetch("/api/v1/auth/logout", { method: "POST" });
+		await apiFetch("/v1/auth/logout", { method: "POST" });
 	} catch {
 		// Ignore errors on logout; the session cookie is cleared on the server.
 	}
@@ -332,7 +332,7 @@ function loadSidebarSessions() {
 	sessionsList.innerHTML =
 		'<li class="loading" role="status" aria-live="polite">Loading sessions...</li>';
 
-	apiFetch("/api/v1/sessions/list", { headers: { Accept: "application/json" } })
+	apiFetch("/v1/sessions/list", { headers: { Accept: "application/json" } })
 		.then((response) => {
 			if (!response.ok) throw new Error(`HTTP ${response.status}`);
 			return response.json();
@@ -418,7 +418,7 @@ function renameSessionPrompt(sessionId, currentName) {
 }
 
 function renameSession(sessionId, newName) {
-	apiFetch("/api/v1/sessions/rename", {
+	apiFetch("/v1/sessions/rename", {
 		method: "POST",
 		headers: { "Content-Type": "application/json", Accept: "application/json" },
 		body: JSON.stringify({ session_id: sessionId, name: newName }),
@@ -451,7 +451,7 @@ function deleteSessionPrompt(sessionId) {
 }
 
 function deleteSession(sessionId) {
-	apiFetch(`/api/v1/sessions/${encodeURIComponent(sessionId)}`, {
+	apiFetch(`/v1/sessions/${encodeURIComponent(sessionId)}`, {
 		method: "DELETE",
 		headers: { Accept: "application/json" },
 	})
@@ -473,7 +473,7 @@ function deleteSession(sessionId) {
 }
 
 function createNewSession() {
-	apiFetch("/api/v1/sessions/create", {
+	apiFetch("/v1/sessions/create", {
 		method: "POST",
 		headers: { "Content-Type": "application/json", Accept: "application/json" },
 		body: JSON.stringify({ name: "New Chat" }),

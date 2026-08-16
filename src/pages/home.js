@@ -5,7 +5,7 @@ import { apiFetch } from "../modules/apiFetch.js";
  * Renders the user's name and partner name in the home page greeting elements.
  */
 async function _renderGreeting() {
-	const response = await apiFetch("/api/v1/profile", {
+	const response = await apiFetch("/v1/profile", {
 		headers: { Accept: "application/json" },
 	});
 	if (!response.ok) return;
