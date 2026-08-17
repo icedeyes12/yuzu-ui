@@ -14,7 +14,11 @@ export async function bootApp({ page } = {}) {
 
 	try {
 		const me = await bootstrapAuth({ redirectOnUnauthorized: true });
-		if (!me) return null;
+		if (!me) {
+			// In case redirect hasn't happened yet, guarantee redirect to login
+			redirectToLogin();
+			return null;
+		}
 
 		// Authenticated: reveal layout and mount sidebar
 		document.body.removeAttribute("data-auth-state");
@@ -23,6 +27,7 @@ export async function bootApp({ page } = {}) {
 		return me;
 	} catch (error) {
 		console.error("[boot] Auth bootstrap failed:", error);
+		// If it was a network error / server offline
 		document.body.setAttribute("data-auth-state", "error");
 		const layout = document.querySelector(".page-layout");
 		if (layout) {

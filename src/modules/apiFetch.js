@@ -25,11 +25,13 @@ export function apiUrl(path) {
  * Redirects the current page to the login page when it is not already a login route.
  */
 export function redirectToLogin() {
+	const currentPath = window.location.pathname.replace(/\/+$/, "");
 	if (
-		window.location.pathname !== loginUrl() &&
-		window.location.pathname !== "/login"
+		currentPath !== "/login" &&
+		currentPath !== "/login.html" &&
+		!currentPath.endsWith("/login.html")
 	) {
-		window.location.assign(loginUrl());
+		window.location.assign("/login.html");
 	}
 }
 
