@@ -48,12 +48,30 @@ function mpaFallback() {
 	};
 }
 
+const CSP_DIRECTIVE =
+	"default-src 'self'; script-src 'self' 'sha256-tVXT1HJKyqaO3OBFEhZPvsUwx8Wqc62KBuqhKe3n+Ko='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://api.yuzuki.space ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'self'";
+
+function cspPlugin() {
+	return {
+		name: "vite-plugin-csp-injector",
+		transformIndexHtml(html, ctx) {
+			if (ctx.filename && ctx.filename.endsWith("preview-shell.html")) {
+				return html;
+			}
+			return html.replace(
+				/<meta http-equiv="Content-Security-Policy"[^>]*>/i,
+				`<meta http-equiv="Content-Security-Policy" content="${CSP_DIRECTIVE}">`,
+			);
+		},
+	};
+}
+
 // Multi-page SPA: one HTML entry per page. The backend serves the built
 // web/dist in local single-origin mode; a static host (Phase 4) rewrites
 // /chat/* and friends to these entries.
 export default defineConfig({
 	base: "/",
-	plugins: [mpaFallback()],
+	plugins: [mpaFallback(), cspPlugin()],
 	build: {
 		outDir: "dist",
 		rollupOptions: {

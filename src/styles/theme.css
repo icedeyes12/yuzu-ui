@@ -1,3 +1,19 @@
+body[data-network-offline="true"]::before {
+	content: "Network Offline — Reconnecting...";
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	background: #da3633;
+	color: #fff;
+	text-align: center;
+	padding: 0.25rem 0.5rem;
+	font-size: 0.8rem;
+	font-weight: 600;
+	z-index: 99999;
+	letter-spacing: 0.02em;
+}
+
 /* 01 Foundations: shared typography, spacing, radius, motion, and blur primitives. */
 /* 02 Semantic Tokens: components consume roles; themes override role values only. */
 

@@ -54,6 +54,19 @@ function mountSidebarWhenIdle() {
 	}
 }
 
+function setupNetworkMonitor() {
+	const updateStatus = () => {
+		if (navigator.onLine) {
+			document.body.removeAttribute("data-network-offline");
+		} else {
+			document.body.setAttribute("data-network-offline", "true");
+		}
+	};
+	window.addEventListener("online", updateStatus);
+	window.addEventListener("offline", updateStatus);
+	updateStatus();
+}
+
 /**
  * Initializes the shared page shell, applies the saved theme, and bootstraps authentication.
  * @param {{ page?: string }} [options] - Optional page identifier applied to the document body.
@@ -63,6 +76,7 @@ export async function bootApp({ page } = {}) {
 	if (page) document.body.dataset.page = page;
 
 	applySavedTheme();
+	setupNetworkMonitor();
 
 	try {
 		const me = await bootstrapAuth({ redirectOnUnauthorized: true });
