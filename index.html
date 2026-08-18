@@ -5,6 +5,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--
+    Strict CSP (defense-in-depth behind DOMPurify). The inline theme pre-paint
+    script below is allowlisted by hash; if you edit it, regenerate the hash
+    over the exact text between <script> and </script> (whitespace included):
+    echo -n "<text>" | openssl dgst -sha256 -binary | base64
+  -->
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'sha256-tVXT1HJKyqaO3OBFEhZPvsUwx8Wqc62KBuqhKe3n+Ko='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'self'"
+  >
   <meta name="description" content="Yuzu Companion — a private, persistent digital entity.">
   <title>Yuzu | Companion</title>
   <link rel="stylesheet" href="/src/styles/style.css">
@@ -20,7 +30,7 @@
   </script>
   <style>
     body[data-auth-state="pending"] .page-layout {
-      visibility: hidden !important;
+      visibility: hidden;
     }
   </style>
 </head>

@@ -889,6 +889,27 @@ a:hover {
 	border: 0;
 }
 
+/* Skip-to-content link — off-screen until focused (keyboard users) */
+.skip-link {
+	position: fixed;
+	top: -100%;
+	left: var(--space-4);
+	z-index: 200;
+	padding: var(--space-2) var(--space-5);
+	background: var(--action-primary);
+	color: var(--action-text);
+	border-radius: 0 0 var(--radius-md) var(--radius-md);
+	font-weight: 600;
+	text-decoration: none;
+	box-shadow: var(--shadow-md);
+}
+
+.skip-link:focus-visible {
+	top: 0;
+	color: var(--action-text);
+	text-decoration: none;
+}
+
 /* ── Page layout shell (shared across all pages) ── */
 .page-layout {
 	display: flex;

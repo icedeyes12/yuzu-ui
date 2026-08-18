@@ -15,6 +15,7 @@ import {
 	registerFenceCleanup,
 	registerFenceHandler,
 } from "./fence-registry.js";
+import { loadMermaid } from "./lazy-vendor.js";
 import { isNearBottom, scrollToBottom } from "./scroll.js";
 
 // ── Copy helper (shared) ─────────────────────────────────────────────────────
@@ -78,9 +79,13 @@ const defaultCodeHandler = {
 	},
 
 	activate(el, _source) {
+		const codeEl = el.querySelector("pre code");
+		// data-fence-source is stripped by DOMPurify when the source contains
+		// closing script/style tags, so fall back to the escaped code text
+		// (sanitizer-inert text with the identical content).
+		const raw = el.dataset.fenceSource || codeEl?.textContent || "";
 		// Copy button
 		el.querySelector(".fence-copy-btn")?.addEventListener("click", () => {
-			const raw = el.dataset.fenceSource || "";
 			copyToClipboard(raw);
 			const btn = el.querySelector(".fence-copy-btn");
 			if (btn) {
@@ -92,7 +97,6 @@ const defaultCodeHandler = {
 		});
 
 		// hljs highlight
-		const codeEl = el.querySelector("pre code");
 		if (codeEl && window.hljs && !codeEl.classList.contains("hljs")) {
 			window.hljs.highlightElement(codeEl);
 		}
@@ -124,7 +128,15 @@ async function renderMermaidDiagram(diagramEl, source) {
 	diagramEl.dataset.fenceRenderSource = source;
 	if (!window.mermaid) {
 		diagramEl.dataset.fenceRenderState = "pending";
-		return;
+		try {
+			await loadMermaid();
+		} catch (error) {
+			console.warn("Mermaid failed to load:", error);
+			if (!diagramEl.isConnected) return;
+			diagramEl.dataset.fenceRenderState = "error";
+			diagramEl.innerHTML = `<pre class="mermaid-fallback"><code>${escAttr(source)}</code></pre>`;
+			return;
+		}
 	}
 
 	if (!window._mermaidInitialized) {
@@ -216,6 +228,8 @@ const mermaidHandler = {
 		const diagramEl = el.querySelector(".fence-mermaid-diagram");
 		const sourceEl = el.querySelector(".fence-mermaid-source");
 		const inspectBtn = el.querySelector(".fence-inspect-btn");
+		const rawSource =
+			source || sourceEl?.querySelector("pre code")?.textContent || "";
 		let showingSource = false;
 
 		inspectBtn?.addEventListener("click", () => {
@@ -233,7 +247,7 @@ const mermaidHandler = {
 		});
 
 		el.querySelector(".fence-copy-btn")?.addEventListener("click", () => {
-			copyToClipboard(el.dataset.fenceSource || source);
+			copyToClipboard(rawSource);
 			const btn = el.querySelector(".fence-copy-btn");
 			if (btn) {
 				btn.textContent = "Copied!";
@@ -243,7 +257,7 @@ const mermaidHandler = {
 			}
 		});
 
-		if (diagramEl) void renderMermaidDiagram(diagramEl, source);
+		if (diagramEl) void renderMermaidDiagram(diagramEl, rawSource);
 		registerFenceCancellation(el, () => {
 			if (diagramEl) mermaidRenderTokens.delete(diagramEl);
 		});
@@ -285,16 +299,14 @@ const htmlPreviewHandler = {
 			buildCopyBtn(),
 		]);
 
-		// Script injected inside srcdoc to send height to parent window postMessage listener
-		const resizeHelperScript = `<script>(function(){function s(){var d=document.documentElement,b=document.body,h=Math.max(d?d.scrollHeight:0,b?b.scrollHeight:0,d?d.offsetHeight:0,b?b.offsetHeight:0);window.parent.postMessage({type:'yuzu-html-resize',height:h},'*');}window.addEventListener('load',s);if(typeof ResizeObserver!=='undefined'&&document.body){new ResizeObserver(s).observe(document.body);}setTimeout(s,100);setTimeout(s,500);setTimeout(s,1200);})();</script>`;
-
-		const srcdocContent = source + resizeHelperScript;
-
+		// The preview content is delivered via postMessage to preview-shell.html
+		// (a same-origin page loaded in a sandboxed iframe). Kept out of the URL
+		// so there is no length ceiling and no direct-visit injection vector.
 		return `<div class="fence-block fence-block--html-preview" data-fence-lang="html" data-fence-source="${escAttr(source)}" data-fence-strategy="buffered">
   ${header}
   <div class="fence-html-body" data-fence-preview-state="loading">
     <div class="fence-html-loading" aria-live="polite">Rendering preview…</div>
-    <iframe class="fence-html-iframe" sandbox="allow-scripts allow-forms allow-popups allow-modals" srcdoc="${escAttr(srcdocContent)}" title="HTML Preview"></iframe>
+    <iframe class="fence-html-iframe" sandbox="allow-scripts allow-forms allow-popups allow-modals" src="/preview-shell.html" title="HTML Preview"></iframe>
     <div class="fence-html-source-block" hidden><pre class="fence-raw-code"><code class="language-html">${escAttr(source)}</code></pre></div>
   </div>
 </div>`;
@@ -316,9 +328,22 @@ const htmlPreviewHandler = {
 			}
 		}
 
+		// data-fence-source is stripped by DOMPurify when the fence source
+		// contains closing script/style tags, so derive the raw source from the
+		// escaped source code block (sanitizer-inert text, identical content).
+		const rawSource =
+			source || sourceBlock?.querySelector("pre code")?.textContent || "";
+
 		const onLoad = () => {
 			previewBody?.setAttribute("data-fence-preview-state", "ready");
 			loadingEl?.remove();
+			// Deliver the previewed HTML now that the shell's message listener is
+			// attached. targetOrigin must be "*" because the sandboxed iframe has
+			// an opaque origin; the shell validates the sender via event.origin.
+			iframe?.contentWindow?.postMessage(
+				{ type: "yuzu-html-content", content: rawSource },
+				"*",
+			);
 		};
 		iframe?.addEventListener("load", onLoad, { once: true });
 
@@ -343,7 +368,7 @@ const htmlPreviewHandler = {
 
 		// Copy always uses raw source
 		el.querySelector(".fence-copy-btn")?.addEventListener("click", () => {
-			copyToClipboard(el.dataset.fenceSource || source);
+			copyToClipboard(rawSource);
 			const btn = el.querySelector(".fence-copy-btn");
 			if (btn) {
 				btn.textContent = "Copied!";

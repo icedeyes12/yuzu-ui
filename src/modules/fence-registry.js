@@ -120,8 +120,11 @@ export function buildFenceHTML(lang, source, isComplete = true) {
 	const handler = resolveFenceHandler(lang);
 
 	if (handler.strategy === "buffered" && !isComplete) {
-		// Return a silent placeholder.  No error, no content.
-		return `<div class="fence-block fence-block--pending" data-fence-lang="${escAttr(lang)}" data-fence-source="${escAttr(source)}" data-fence-strategy="buffered"></div>`;
+		// Return a silent placeholder.  No error, no content. The hidden code
+		// carrier duplicates the source as sanitizer-inert text because
+		// DOMPurify strips data-fence-source when the source contains closing
+		// script/style tags (see flushPendingFenceBlocks for the recovery).
+		return `<div class="fence-block fence-block--pending" data-fence-lang="${escAttr(lang)}" data-fence-source="${escAttr(source)}" data-fence-strategy="buffered"><pre class="fence-pending-source" hidden><code>${escAttr(source)}</code></pre></div>`;
 	}
 
 	return handler.buildHTML(source, lang);
@@ -189,7 +192,13 @@ export function flushPendingFenceBlocks(root) {
 	let flushed = 0;
 	for (const el of root.querySelectorAll(".fence-block--pending")) {
 		const lang = el.dataset.fenceLang || "";
-		const source = el.dataset.fenceSource || "";
+		// data-fence-source is stripped by DOMPurify when the source contains
+		// closing script/style tags, so fall back to the hidden escaped code
+		// carrier (sanitizer-inert text with the identical content).
+		const source =
+			el.dataset.fenceSource ||
+			el.querySelector(".fence-pending-source code")?.textContent ||
+			"";
 		const handler = resolveFenceHandler(lang);
 		if (!handler) continue;
 

@@ -36,7 +36,7 @@ export function renderMessageHTML(msg) {
 	installMarkedFenceRenderer();
 	if (msg.role !== "tool")
 		return classifyBufferedFences(
-			renderMessageContent(msg.content, msg.role === "user"),
+			renderMessageContent(msg.content),
 			msg.content,
 		);
 	try {
@@ -69,10 +69,14 @@ function classifyBufferedFences(html, rawContent) {
 			.split("\n")
 			.filter((line) => line.trim() === "```").length;
 		if (closeCount === 0)
+			// The pending placeholder carries a hidden escaped code block as well
+			// as data-fence-source: DOMPurify strips data-* values that contain
+			// closing script/style tags, so the source must also survive as
+			// sanitizer-inert text for flushPendingFenceBlocks to recover.
 			result = replaceOuterDiv(
 				result,
 				`data-fence-lang="${lang}"`,
-				`<div class="fence-block fence-block--pending" data-fence-lang="${lang}" data-fence-source="${escapeHtml(afterOpen)}" data-fence-strategy="buffered"></div>`,
+				`<div class="fence-block fence-block--pending" data-fence-lang="${lang}" data-fence-source="${escapeHtml(afterOpen)}" data-fence-strategy="buffered"><pre class="fence-pending-source" hidden><code>${escapeHtml(afterOpen)}</code></pre></div>`,
 			);
 	}
 	return result;

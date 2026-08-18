@@ -31,7 +31,7 @@ export function redirectToLogin() {
 		currentPath !== "/login.html" &&
 		!currentPath.endsWith("/login.html")
 	) {
-		window.location.assign("/login.html");
+		window.location.assign(loginUrl());
 	}
 }
 

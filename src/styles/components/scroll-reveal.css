@@ -1,0 +1,32 @@
+/* Scroll-reveal for page sections (about + config).
+   JS: src/modules/scroll-reveal.js adds `animate-on-scroll` to sections and
+   reveals them via `is-visible` once they intersect the viewport. */
+
+.animate-on-scroll {
+	opacity: 0;
+	transform: translateY(20px);
+	transition:
+		opacity var(--motion-slow) var(--motion-easing-standard),
+		transform var(--motion-slow) var(--motion-easing-standard);
+}
+
+.animate-on-scroll.is-visible {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+/* Keyboard focus reveals the section it lands in so the focus target is
+   never hidden behind a not-yet-revealed section. Pairs with the focusin
+   handler in scroll-reveal.js (this is the no-JS fallback). */
+.animate-on-scroll:focus-within {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-on-scroll {
+		opacity: 1;
+		transform: none;
+		transition: none;
+	}
+}

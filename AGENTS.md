@@ -20,5 +20,12 @@ Operating principles and component architecture for the `yuzu-ui` client codebas
 
 ```bash
 bunx @biomejs/biome check src/
+bun run test
 bun run build
+```
+
+E2E (requires a one-time `npx playwright install chromium`):
+
+```bash
+bun run test:e2e
 ```

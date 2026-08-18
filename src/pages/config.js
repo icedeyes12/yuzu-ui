@@ -17,6 +17,7 @@ import {
 	writeByokConfig,
 } from "../modules/clientStorage.js";
 import { listProviders } from "../modules/provider-registry.js";
+import { initScrollReveal } from "../modules/scroll-reveal.js";
 import { escapeHtml } from "../modules/tool-renderer/dom-utils.js";
 import { renderLogo } from "../modules/visual-registry.js";
 
@@ -185,12 +186,11 @@ function validateProviderKey(provider, value) {
 async function init() {
 	const me = await bootApp({ page: "config" });
 	if (!me) return;
-	console.log("Config page loaded - initializing...");
 	const loaded = await loadAppConfig();
 	if (!loaded) return;
 	await Promise.all([loadGlobalKnowledge(), loadProviderSettings()]);
 	setupEventListeners();
-	initializeConfigAnimations();
+	initScrollReveal(".config-section");
 }
 
 // Load application configuration from backend (SSOT)
@@ -665,8 +665,6 @@ async function testProviderConnection(providerName) {
 }
 
 function setupEventListeners() {
-	console.log("Setting up config event listeners...");
-
 	const saveProfileBtn = document.getElementById("save-profile");
 	if (saveProfileBtn)
 		saveProfileBtn.addEventListener("click", saveProfileSettings);
@@ -755,8 +753,6 @@ function setupEventListeners() {
 		);
 		if (dismiss) dismiss.closest(".config-notification")?.remove();
 	});
-
-	console.log("Event listeners setup complete");
 }
 
 // Load image model on page load
@@ -1172,29 +1168,6 @@ function showNotification(message, type = "info") {
 			notification.remove();
 		}
 	}, 5000);
-}
-
-// Initialize config animations
-function initializeConfigAnimations() {
-	const observerOptions = {
-		threshold: 0.1,
-		rootMargin: "0px 0px -50px 0px",
-	};
-
-	const observer = new IntersectionObserver((entries) => {
-		entries.forEach((entry) => {
-			if (entry.isIntersecting) {
-				entry.target.classList.add("is-visible");
-			}
-		});
-	}, observerOptions);
-
-	document.querySelectorAll(".config-section").forEach((section) => {
-		section.classList.add("animate-on-scroll");
-		observer.observe(section);
-	});
-
-	console.log("Config animations initialized");
 }
 
 async function saveLocation() {

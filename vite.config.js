@@ -1,6 +1,8 @@
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { defineConfig } from "vite";
+import { configDefaults } from "vitest/config";
 
 const entry = (name) => resolve(import.meta.dirname, name);
 
@@ -19,9 +21,18 @@ function mpaFallback() {
 	return {
 		name: "mpa-clean-route-fallback",
 		configureServer(server) {
-			server.middlewares.use((req, _res, next) => {
+			server.middlewares.use((req, res, next) => {
 				if (req.method !== "GET") return next();
 				const pathname = new URL(req.url, "http://localhost").pathname;
+				if (pathname === "/preview-shell.html") {
+					// Serve the sandbox preview shell raw, without Vite's HTML
+					// transform: the injected @vite/client module cannot load in
+					// the opaque-origin sandbox (CORS) and the shell needs no HMR
+					// (its content arrives via postMessage).
+					res.setHeader("Content-Type", "text/html; charset=utf-8");
+					res.end(readFileSync(entry("preview-shell.html")));
+					return;
+				}
 				let entryName = ROUTE_ENTRIES[pathname];
 				// /chat/{session_id} deep links resolve to the chat entry; the
 				// SPA reads the session id from the path on boot.
@@ -52,8 +63,28 @@ export default defineConfig({
 				chat: entry("chat.html"),
 				config: entry("config.html"),
 				about: entry("about.html"),
+				preview: entry("preview-shell.html"),
+			},
+			output: {
+				// Stable vendor chunk (marked + highlight.js) so app-only deploys
+				// keep the shared chunk cached by returning visitors. Mermaid and
+				// KaTeX are code-split into their own dynamic chunks on demand.
+				manualChunks(id) {
+					if (
+						id.includes("node_modules/highlight.js") ||
+						id.includes("node_modules/marked")
+					) {
+						return "vendor";
+					}
+					return undefined;
+				},
 			},
 		},
+	},
+	test: {
+		environment: "happy-dom",
+		// Playwright specs live in e2e/ and must not be collected by vitest.
+		exclude: [...configDefaults.exclude, "e2e/**"],
 	},
 	server: {
 		port: 5173,

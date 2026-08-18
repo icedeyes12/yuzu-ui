@@ -1,9 +1,29 @@
 // FILE: static/js/modules/messages.js
 // DESCRIPTION: Message creation, rendering, and formatting utilities
 
+import DOMPurify from "dompurify";
 import { renderRuntimeIcon } from "../runtime-icon-renderer.js";
 import { findMessageById } from "./state.js";
 import { safeImagePath } from "./tool-renderer/dom-utils.js";
+
+// iframes are not on DOMPurify's default allowlist (they get stripped), but the
+// chat's HTML-preview fence renders inside one. Allow iframes only when they are
+// hard-sandboxed (no allow-same-origin) and load a same-origin or https URL —
+// the same policy the fence uses. srcdoc iframes are always forbidden.
+DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+	if (node.nodeName !== "IFRAME") return;
+	const sandbox = node.getAttribute("sandbox") || "";
+	if (!sandbox || /allow-same-origin/i.test(sandbox)) {
+		node.remove();
+		return;
+	}
+	const src = (node.getAttribute("src") || "").trim();
+	const safeRelative =
+		src.startsWith("/") || src.startsWith("./") || src.startsWith("../");
+	if (!src || (!safeRelative && !/^https?:\/\//i.test(src))) {
+		node.remove();
+	}
+});
 
 /**
  * Create a message element with proper structure.
@@ -41,12 +61,12 @@ export function createMessageElement(
 		try {
 			// Find the actual tool name from a passed message object (handled by store-renderer later)
 			// But since createMessageElement doesn't get the full object, store-renderer handles tool rendering
-			contentContainer.innerHTML = renderMessageContent(content, false);
+			contentContainer.innerHTML = renderMessageContent(content);
 		} catch (_e) {
-			contentContainer.innerHTML = renderMessageContent(content, false);
+			contentContainer.innerHTML = renderMessageContent(content);
 		}
 	} else {
-		contentContainer.innerHTML = renderMessageContent(content, role === "user");
+		contentContainer.innerHTML = renderMessageContent(content);
 	}
 
 	bubble.appendChild(contentContainer);
@@ -164,7 +184,7 @@ export function isRenderableHistoryRole(role) {
  * @param {boolean} isUser - Whether this is a user message
  * @returns {string} Rendered HTML
  */
-export function renderMessageContent(rawText, _isUser = false) {
+export function renderMessageContent(rawText) {
 	const safeText = String(rawText ?? "");
 
 	try {
@@ -186,7 +206,16 @@ export function renderMessageContent(rawText, _isUser = false) {
 			window.__yuzuMarkdownMetrics.parseCount += 1;
 			window.__yuzuMarkdownMetrics.parseDurationMs +=
 				performance.now() - startedAt;
-			return rendered.replace(
+			// marked passes raw HTML through (sanitize is off by default), so the
+			// output must be sanitized: stored messages can carry script tags,
+			// event handlers, and javascript: URLs injected by other users. The
+			// fence iframe is allowed back in via the sandbox hook above.
+			const sanitized = DOMPurify.sanitize(rendered, {
+				ADD_TAGS: ["iframe"],
+				ADD_ATTR: ["sandbox"],
+				FORBID_ATTR: ["srcdoc"],
+			});
+			return sanitized.replace(
 				/(<img\b[^>]*\bsrc=["'])([^"']+)(["'])/gi,
 				(_match, prefix, source, suffix) =>
 					`${prefix}${safeImagePath(source) || source}${suffix}`,

@@ -1,7 +1,6 @@
 import { apiFetch, apiUrl } from "../modules/apiFetch.js";
 import { bootstrapAuth, getCachedMe } from "../modules/authBootstrap.js";
 import { clearUserScopedStorage } from "../modules/clientStorage.js";
-import { eventRouter } from "../modules/event-router.js";
 import {
 	aboutUrl,
 	chatUrl,
@@ -9,10 +8,11 @@ import {
 	homeUrl,
 	loginUrl,
 } from "../modules/links.js";
-import { router } from "../modules/router.js";
-import { handleSessionSwitch } from "../modules/session-controller.js";
-import { chatStore } from "../modules/store.js";
 import { applyTheme, getSavedTheme, persistTheme } from "../modules/theme.js";
+
+// The chat stack (event-router, store, session-controller, history, renderer)
+// is deliberately NOT imported here — see sidebar-chat.js. This keeps the
+// shared sidebar shell lean on pages that only navigate to /chat.
 
 let _isSessionSwitching = false;
 let _sessionSwitchCooldown = false;
@@ -65,11 +65,11 @@ function sidebarMarkup() {
     <section class="sidebar-section" aria-label="Theme selector">
       <h3>Theme</h3>
       <div class="custom-dropdown" id="themeDropdown" role="listbox" aria-label="Select theme">
-        <button class="dropdown-selected" type="button" aria-haspopup="listbox" aria-expanded="false">
+        <button class="dropdown-selected" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="themeDropdownOptions">
           <span class="selected-text">Stellar Night</span>
           <span class="dropdown-arrow" aria-hidden="true">▼</span>
         </button>
-        <div class="dropdown-options" role="listbox">
+        <div class="dropdown-options" id="themeDropdownOptions" role="listbox">
           ${themeOptions}
         </div>
       </div>
@@ -138,8 +138,44 @@ function initCustomDropdown() {
 
 	const selected = dropdown.querySelector(".dropdown-selected");
 	const options = dropdown.querySelector(".dropdown-options");
-	const optionItems = dropdown.querySelectorAll(".dropdown-option");
-	if (!selected || !options) return;
+	const optionItems = [...dropdown.querySelectorAll(".dropdown-option")];
+	if (!selected || !options || optionItems.length === 0) return;
+
+	// The dropdown's open state lives in the .active classes; keep the button's
+	// aria-expanded in sync so screen readers get accurate state.
+	const syncExpanded = () => {
+		selected.setAttribute(
+			"aria-expanded",
+			String(selected.classList.contains("active")),
+		);
+	};
+
+	// Listbox pattern: while the list is open, only the focused option stays in
+	// the tab order (roving tabindex).
+	const setRovingTabindex = (activeOption) => {
+		for (const item of optionItems) item.tabIndex = -1;
+		(activeOption || optionItems[0]).tabIndex = 0;
+	};
+
+	const openDropdown = () => {
+		options.classList.add("active");
+		selected.classList.add("active");
+		setRovingTabindex(
+			optionItems.find((item) => item.classList.contains("active")),
+		);
+		syncExpanded();
+	};
+
+	const closeDropdown = () => {
+		options.classList.remove("active");
+		selected.classList.remove("active");
+		syncExpanded();
+	};
+
+	const focusOption = (option) => {
+		setRovingTabindex(option);
+		option.focus();
+	};
 
 	selected.addEventListener("click", (event) => {
 		event.stopPropagation();
@@ -148,24 +184,82 @@ function initCustomDropdown() {
 			if (open !== options) open.classList.remove("active");
 		}
 		for (const open of document.querySelectorAll(".dropdown-selected.active")) {
-			if (open !== selected) open.classList.remove("active");
+			if (open !== selected) {
+				open.classList.remove("active");
+				open.setAttribute("aria-expanded", "false");
+			}
 		}
-		options.classList.toggle("active", !isActive);
-		selected.classList.toggle("active", !isActive);
+		if (isActive) {
+			closeDropdown();
+		} else {
+			openDropdown();
+		}
+	});
+
+	// Keyboard: ArrowDown/Up on the button open the list and move focus into it
+	// (matching native <select>). Escape closes the list first; a second press
+	// bubbles to the sidebar-drawer handler.
+	selected.addEventListener("keydown", (event) => {
+		if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+			event.preventDefault();
+			if (!options.classList.contains("active")) openDropdown();
+			focusOption(
+				event.key === "ArrowDown"
+					? optionItems[0]
+					: optionItems[optionItems.length - 1],
+			);
+		} else if (event.key === "Escape" && options.classList.contains("active")) {
+			event.stopPropagation();
+			closeDropdown();
+			selected.focus();
+		}
+	});
+
+	options.addEventListener("keydown", (event) => {
+		const currentIndex = optionItems.indexOf(document.activeElement);
+		if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+			event.preventDefault();
+			const delta = event.key === "ArrowDown" ? 1 : -1;
+			const target =
+				currentIndex === -1
+					? delta === 1
+						? optionItems[0]
+						: optionItems[optionItems.length - 1]
+					: optionItems[
+							Math.min(
+								optionItems.length - 1,
+								Math.max(0, currentIndex + delta),
+							)
+						];
+			focusOption(target);
+		} else if (event.key === "Home" || event.key === "End") {
+			event.preventDefault();
+			focusOption(
+				event.key === "Home"
+					? optionItems[0]
+					: optionItems[optionItems.length - 1],
+			);
+		} else if (event.key === "Escape") {
+			event.preventDefault();
+			event.stopPropagation();
+			closeDropdown();
+			selected.focus();
+		} else if (event.key === "Enter" || event.key === " ") {
+			event.preventDefault();
+			optionItems[currentIndex]?.click();
+		}
 	});
 
 	for (const option of optionItems) {
 		option.addEventListener("click", function () {
 			const value = this.getAttribute("data-value");
 			switchTheme(value);
-			options.classList.remove("active");
-			selected.classList.remove("active");
+			closeDropdown();
 		});
 	}
 
 	document.addEventListener("click", () => {
-		options.classList.remove("active");
-		selected.classList.remove("active");
+		closeDropdown();
 	});
 }
 
@@ -487,7 +581,9 @@ function createNewSession() {
 				loadSidebarSessions();
 				toggleSidebar();
 				if (window.location.pathname.startsWith("/chat")) {
-					void handleSessionSwitch(data.session_id);
+					void import("./sidebar-chat.js").then(({ createSessionChat }) =>
+						createSessionChat(data.session_id),
+					);
 				} else {
 					window.location.assign(chatUrl(data.session_id));
 				}
@@ -500,17 +596,6 @@ function createNewSession() {
 
 function switchSession(sessionId) {
 	if (_sessionSwitchCooldown || _isSessionSwitching) return;
-
-	const currentSession = router.currentSessionId;
-	if (
-		currentSession &&
-		chatStore.isGenerating &&
-		chatStore.sessionId === currentSession
-	) {
-		console.log(
-			`[Sidebar] Active stream in session ${currentSession}, pausing`,
-		);
-	}
 
 	const isOnChatPage = window.location.pathname.startsWith("/chat");
 	if (!isOnChatPage) {
@@ -526,11 +611,9 @@ function switchSession(sessionId) {
 
 	_isSessionSwitching = true;
 	_setSessionSwitchingVisual(sessionId, true);
-	if (router.currentSessionId) {
-		eventRouter.cancelStream(router.currentSessionId);
-	}
 
-	handleSessionSwitch(sessionId)
+	void import("./sidebar-chat.js")
+		.then(({ switchSessionChat }) => switchSessionChat(sessionId))
 		.then(() => toggleSidebar())
 		.catch(() => showNotification("Failed to switch session", "error"))
 		.finally(() => {

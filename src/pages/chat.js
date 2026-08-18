@@ -16,34 +16,43 @@ import "../modules/vendor.js";
 import { router } from "../modules/router.js";
 import {
 	focusChatInput,
+	handleSessionSwitch,
 	initializeChatSession,
 } from "../modules/session-controller.js";
 
 /**
- * Loads the current session and partner names into the chat interface.
+ * Fetches the profile once: session name, partner name, active session id.
+ * @returns {Promise<object|null>} Profile payload, or null on failure.
  */
-async function loadCurrentSessionName() {
+async function fetchProfile() {
 	try {
 		const response = await apiFetch("/v1/profile", {
 			headers: { Accept: "application/json" },
 		});
 		if (!response.ok)
 			throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-		const data = await response.json();
-
-		const sessionNameElement = document.getElementById("sessionName");
-		if (sessionNameElement && data.active_session) {
-			sessionNameElement.textContent =
-				data.active_session.name || "Current Chat";
-		}
-
-		// Reflect partner/user name in header if present
-		const partnerEl = document.getElementById("partnerName");
-		if (partnerEl && data.partner_name) {
-			partnerEl.textContent = data.partner_name;
-		}
+		return await response.json();
 	} catch (error) {
 		chatStore.setError(error.message || "Failed to load profile.");
+		return null;
+	}
+}
+
+/**
+ * Reflects the profile's session and partner names in the chat header.
+ * @param {object|null} data - Profile payload.
+ */
+function applyProfileToHeader(data) {
+	if (!data) return;
+	const sessionNameElement = document.getElementById("sessionName");
+	if (sessionNameElement && data.active_session) {
+		sessionNameElement.textContent = data.active_session.name || "Current Chat";
+	}
+
+	// Reflect partner/user name in header if present
+	const partnerEl = document.getElementById("partnerName");
+	if (partnerEl && data.partner_name) {
+		partnerEl.textContent = data.partner_name;
 	}
 }
 
@@ -62,29 +71,21 @@ async function initializeChat() {
 		initializeInputBehavior();
 		initializeMessageActions();
 
-		// Initialize URL router
+		// Initialize URL router. Back/forward navigation switches sessions
+		// client-side (the no-op handler initFromURL registered is replaced).
 		const urlSessionId = router.initFromURL();
+		router.setupPopStateHandler(handleSessionSwitch);
 
-		// Load session name
-		await loadCurrentSessionName();
+		// Single profile fetch: header names + active session id
+		const profileData = await fetchProfile();
+		applyProfileToHeader(profileData);
 
 		// Stream state is now fully managed by ConversationStore + EventRouter
 
-		let sessionId = urlSessionId;
-		if (!sessionId) {
-			const profileResponse = await apiFetch("/v1/profile", {
-				headers: { Accept: "application/json" },
-			});
-			if (!profileResponse.ok)
-				throw new Error(
-					`HTTP ${profileResponse.status}: ${profileResponse.statusText}`,
-				);
-			const profileData = await profileResponse.json();
-			sessionId = profileData.active_session?.id;
-		}
+		const sessionId = urlSessionId || profileData?.active_session?.id;
 		if (sessionId) {
 			await initializeChatSession(sessionId);
-		} else {
+		} else if (profileData) {
 			chatStore.setError("No active conversation is available.");
 		}
 

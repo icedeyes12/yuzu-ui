@@ -19,17 +19,11 @@ export class RouterManager {
 		const pathParts = window.location.pathname.split("/").filter((p) => p);
 		if (pathParts.length >= 2 && pathParts[0] === "chat") {
 			this.currentSessionId = pathParts[1];
-			console.log(
-				`[Router] Initialized with session ${this.currentSessionId} from URL`,
-			);
 		} else {
 			const params = new URLSearchParams(window.location.search);
 			const sessionId = params.get("session");
 			if (sessionId) {
 				this.currentSessionId = sessionId;
-				console.log(
-					`[Router] Fallback initialized with session ${this.currentSessionId} from query`,
-				);
 			}
 		}
 
@@ -70,10 +64,16 @@ export class RouterManager {
 	}
 
 	/**
-	 * Setup browser back/forward navigation handler.
+	 * Setup browser back/forward navigation handler. Replaces any previously
+	 * registered handler: initFromURL registers a no-op, and callers wire the
+	 * real callback afterwards — without replacement the two listeners would
+	 * race (the no-op would consume the session change first).
 	 */
 	setupPopStateHandler(handleSessionSwitch) {
-		window.addEventListener("popstate", (_event) => {
+		if (this._popStateHandler) {
+			window.removeEventListener("popstate", this._popStateHandler);
+		}
+		const listener = (_event) => {
 			// Extract from path first
 			const pathParts = window.location.pathname.split("/").filter((p) => p);
 			let sessionId = null;
@@ -93,7 +93,9 @@ export class RouterManager {
 					void handleSessionSwitch(sessionId, false);
 				}
 			}
-		});
+		};
+		this._popStateHandler = listener;
+		window.addEventListener("popstate", listener);
 	}
 }
 

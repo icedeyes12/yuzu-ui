@@ -1,6 +1,58 @@
 import { mountSidebar } from "./components/sidebar.js";
+import { redirectToLogin } from "./modules/apiFetch.js";
 import { bootstrapAuth } from "./modules/authBootstrap.js";
 import { applySavedTheme } from "./modules/theme.js";
+
+/**
+ * Mounts the sidebar after first paint without blocking the initial render.
+ *
+ * Uses requestIdleCallback (with a hard timeout) so the page shell paints
+ * first; falls back to a next-tick setTimeout where rIC is unavailable. If the
+ * user reaches for the sidebar (hamburger, drawer, overlay) before the idle
+ * callback fires, the mount is flushed immediately so the very first
+ * interaction behaves correctly.
+ */
+function mountSidebarWhenIdle() {
+	let mounted = false;
+	let idleHandle = null;
+	let timeoutHandle = null;
+
+	const mount = () => {
+		if (mounted) return;
+		mounted = true;
+		document.removeEventListener("pointerdown", onSidebarInteraction, true);
+		document.removeEventListener("keydown", onSidebarInteraction, true);
+		if (
+			idleHandle !== null &&
+			typeof window.cancelIdleCallback === "function"
+		) {
+			window.cancelIdleCallback(idleHandle);
+		}
+		if (timeoutHandle !== null) window.clearTimeout(timeoutHandle);
+		mountSidebar();
+	};
+
+	const onSidebarInteraction = (event) => {
+		if (
+			event.target?.closest?.("[data-action='toggle-sidebar'], #sidebarRoot")
+		) {
+			mount();
+		}
+	};
+
+	document.addEventListener("pointerdown", onSidebarInteraction, {
+		capture: true,
+	});
+	document.addEventListener("keydown", onSidebarInteraction, {
+		capture: true,
+	});
+
+	if (typeof window.requestIdleCallback === "function") {
+		idleHandle = window.requestIdleCallback(mount, { timeout: 300 });
+	} else {
+		timeoutHandle = window.setTimeout(mount, 0);
+	}
+}
 
 /**
  * Initializes the shared page shell, applies the saved theme, and bootstraps authentication.
@@ -20,9 +72,9 @@ export async function bootApp({ page } = {}) {
 			return null;
 		}
 
-		// Authenticated: reveal layout and mount sidebar
+		// Authenticated: reveal layout and mount the sidebar after first paint
 		document.body.removeAttribute("data-auth-state");
-		mountSidebar();
+		mountSidebarWhenIdle();
 		applySavedTheme();
 		return me;
 	} catch (error) {

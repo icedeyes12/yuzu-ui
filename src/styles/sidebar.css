@@ -211,6 +211,10 @@
 	background: rgba(255, 255, 255, 0.1);
 }
 
+.dropdown-option:focus-visible {
+	background: rgba(255, 255, 255, 0.15);
+}
+
 .dropdown-option.active {
 	background: rgba(255, 255, 255, 0.15);
 	font-weight: 600;

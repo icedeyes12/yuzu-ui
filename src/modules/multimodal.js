@@ -37,7 +37,6 @@ export class MultimodalManager {
 	}
 
 	init() {
-		console.log("Initializing Multimodal...");
 		this.createToggle();
 		this.setupEventListeners();
 		this.patchSendButton();
@@ -117,7 +116,6 @@ export class MultimodalManager {
 		const text = input.value.trim();
 
 		if (this.isSending) {
-			console.log("Already sending, please wait...");
 			return;
 		}
 

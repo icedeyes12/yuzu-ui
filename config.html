@@ -7,10 +7,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--
+    Strict CSP (defense-in-depth behind DOMPurify). The inline theme pre-paint
+    script below is allowlisted by hash; if you edit it, regenerate the hash
+    over the exact text between <script> and </script> (whitespace included):
+    echo -n "<text>" | openssl dgst -sha256 -binary | base64
+  -->
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'sha256-tVXT1HJKyqaO3OBFEhZPvsUwx8Wqc62KBuqhKe3n+Ko='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'self'"
+  >
   <meta name="description" content="Configure your Yuzu Companion — providers, identity, and advanced settings.">
   <title>Configuration | Yuzu Companion</title>
   <link rel="stylesheet" href="/src/styles/style.css">
   <link rel="stylesheet" href="/src/styles/config.css">
+  <link rel="stylesheet" href="/src/styles/components/scroll-reveal.css">
   <link rel="stylesheet" href="/src/styles/sidebar.css">
   <link rel="stylesheet" href="/src/styles/theme.css">
   <link rel="stylesheet" href="/src/styles/components/visual-language.css">
@@ -22,11 +33,13 @@
   </script>
   <style>
     body[data-auth-state="pending"] .page-layout {
-      visibility: hidden !important;
+      visibility: hidden;
     }
   </style>
 </head>
 <body class="config-body page-frame" data-page="config" data-auth-state="pending">
+  <a href="#configContent" class="skip-link">Skip to content</a>
+
   <div id="sidebarRoot"></div>
 
   <div class="page-layout">
@@ -51,7 +64,7 @@
       </div>
     </header>
 
-    <main class="config-content page-content" aria-label="Configuration settings">
+    <main class="config-content page-content" id="configContent" aria-label="Configuration settings" tabindex="-1">
       <section class="config-section" aria-labelledby="identity-heading">
         <h2 id="identity-heading">Identity Settings</h2>
         <form id="identity-form" novalidate>

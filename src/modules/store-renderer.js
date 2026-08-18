@@ -2,6 +2,7 @@ import { createMessageElement } from "./messages.js";
 import { chatStore } from "./store.js";
 import { escapeHtml, safeImagePath } from "./tool-renderer/dom-utils.js";
 import "./fence-components.js";
+import { loadKatex } from "./lazy-vendor.js";
 import { patchContentContainer } from "./renderer/dom-patcher.js";
 import {
 	activateMessageFences,
@@ -26,6 +27,7 @@ export class DOMRenderer {
 		this.renderedIds = new Set();
 		this.activeTypingIndicator = null;
 		this.activeError = null;
+		this.emptyStateEl = null;
 		this.pendingRender = null;
 		this.renderFrame = null;
 		this.renderFrameCancel = null;
@@ -95,6 +97,8 @@ export class DOMRenderer {
 		cleanupMessageFences(this.container);
 		this.lastRenderedMessageHashes.clear();
 		this.renderMetrics.clear();
+		this.emptyStateEl?.remove();
+		this.emptyStateEl = null;
 	}
 
 	render(messages, isGenerating, error = null, eventObj = null) {
@@ -155,6 +159,8 @@ export class DOMRenderer {
 			activateMessageFences(messageElement, message, isGenerating);
 		}
 		this._syncTypingIndicator(messages, isGenerating);
+		this._syncEmptyState(messages, isGenerating, error);
+		this.container.setAttribute("aria-busy", isGenerating ? "true" : "false");
 	}
 
 	_createMessageDOM(msg) {
@@ -228,7 +234,12 @@ export class DOMRenderer {
 				)
 					window.hljs.highlightElement(block);
 			});
-		if (window.renderMathInElement) {
+		// KaTeX is lazy-loaded: only fetch it when the message actually
+		// contains math delimiters.
+		const text = contentContainer.textContent || "";
+		if (!text || !/\$|\\\(|\\\[/.test(text)) return;
+		const renderMath = () => {
+			if (!window.renderMathInElement) return;
 			try {
 				window.renderMathInElement(contentContainer, {
 					delimiters: [
@@ -242,7 +253,12 @@ export class DOMRenderer {
 			} catch (_error) {
 				return;
 			}
+		};
+		if (window.renderMathInElement) {
+			renderMath();
+			return;
 		}
+		void loadKatex().then(renderMath);
 	}
 
 	_syncTypingIndicator(_messages, isGenerating) {
@@ -265,6 +281,52 @@ export class DOMRenderer {
 		if (!isGenerating && this.activeTypingIndicator) {
 			this.activeTypingIndicator.remove();
 			this.activeTypingIndicator = null;
+		}
+	}
+
+	/**
+	 * Show a friendly empty state when a session has no messages yet.
+	 * Hidden while history is still loading (no session) or during a stream.
+	 */
+	_syncEmptyState(messages, isGenerating, error) {
+		const shouldShow =
+			Boolean(chatStore.sessionId) &&
+			(!messages || messages.length === 0) &&
+			!isGenerating &&
+			!error;
+		if (shouldShow && !this.emptyStateEl) {
+			this.emptyStateEl = document.createElement("div");
+			this.emptyStateEl.className = "chat-empty-state";
+			this.emptyStateEl.innerHTML = `
+				<div class="chat-empty-state__icon" aria-hidden="true">ฅ^•ﻌ•^ฅ</div>
+				<h2 class="chat-empty-state__title">Start a conversation with Yuzu</h2>
+				<p class="chat-empty-state__subtitle">Ask anything — code, ideas, or just a friendly chat.</p>
+				<div class="chat-empty-state__suggestions">
+					<button type="button" class="chat-empty-state__chip" data-suggestion="Help me debug a tricky bug in my code">Debug a bug</button>
+					<button type="button" class="chat-empty-state__chip" data-suggestion="Explain how recursion works with a simple example">Explain a concept</button>
+					<button type="button" class="chat-empty-state__chip" data-suggestion="Write a haiku about outer space">Write something</button>
+				</div>
+			`;
+			for (const chip of this.emptyStateEl.querySelectorAll(
+				"[data-suggestion]",
+			)) {
+				chip.addEventListener("click", () => {
+					const input = document.getElementById("messageInput");
+					if (input) {
+						input.value = chip.dataset.suggestion;
+						input.style.height = "auto";
+						input.style.height = `${Math.min(input.scrollHeight, 400)}px`;
+						input.dispatchEvent(new Event("input", { bubbles: true }));
+					}
+					document.getElementById("sendButton")?.click();
+				});
+			}
+			this.container.appendChild(this.emptyStateEl);
+			return;
+		}
+		if (!shouldShow && this.emptyStateEl) {
+			this.emptyStateEl.remove();
+			this.emptyStateEl = null;
 		}
 	}
 

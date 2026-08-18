@@ -1,0 +1,57 @@
+<!--
+  Sandboxed HTML-preview shell for the chat "html" fence.
+
+  The chat page loads this page inside a sandboxed iframe (allow-scripts,
+  no allow-same-origin) and delivers the previewed HTML via postMessage.
+  Content is deliberately NOT read from the URL, so a directly visited
+  preview-shell.html renders nothing and cannot be weaponized with a crafted
+  link. The only accepted sender is a same-origin window (the chat page
+  itself); the script checks event.origin before rendering anything.
+
+  Because this is a real document fetched over HTTP, it has its own (absent)
+  CSP instead of inheriting the parent's strict script-src — so the previewed
+  HTML's scripts run here, fully isolated on an opaque origin.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML Preview</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    (() => {
+      const appOrigin = new URL(location.href).origin;
+      let rendered = false;
+
+      window.addEventListener("message", (event) => {
+        if (rendered) return;
+        if (event.origin !== appOrigin) return;
+        if (event.data?.type !== "yuzu-html-content") return;
+        rendered = true;
+
+        // Re-parse the content as a real document so its inline scripts run
+        // (same semantics as the old srcdoc approach). This wipes the shell's
+        // own document, so the resize helper is appended afterwards.
+        document.open();
+        document.write(event.data.content || "");
+        document.close();
+
+        // Auto-height helper: reports scroll height to the parent window.
+        const helper = document.createElement("script");
+        helper.textContent =
+          "(function(){function s(){var d=document.documentElement,b=document.body,h=Math.max(d?d.scrollHeight:0,b?b.scrollHeight:0,d?d.offsetHeight:0,b?b.offsetHeight:0);window.parent.postMessage({type:'yuzu-html-resize',height:h},'*');}window.addEventListener('load',s);if(typeof ResizeObserver!=='undefined'&&document.body){new ResizeObserver(s).observe(document.body);}setTimeout(s,100);setTimeout(s,500);setTimeout(s,1200);})();";
+        document.body.appendChild(helper);
+      });
+    })();
+  </script>
+</body>
+</html>
