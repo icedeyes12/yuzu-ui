@@ -11,7 +11,8 @@ test.beforeEach(async ({ page }) => {
 		]);
 	// Keep the shared stub in its base state (other specs mutate it).
 	await fetch(`${STUB}/v1/_reset`, { method: "POST" });
-});	test("browser back/forward switches sessions without a reload", async ({
+});
+test("browser back/forward switches sessions without a reload", async ({
 	page,
 }) => {
 	// Start on Session One (history is fetched for s1).
