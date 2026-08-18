@@ -12,11 +12,18 @@ async function init() {
 	}
 
 	// Already signed in? Skip the login page.
-	const response = await apiFetch("/v1/auth/me", {
-		headers: { Accept: "application/json" },
-	});
-	if (response.ok) {
-		window.location.assign(homeUrl());
+	try {
+		const response = await apiFetch("/v1/auth/me", {
+			headers: { Accept: "application/json" },
+		});
+		if (response.ok) {
+			const me = await response.json();
+			if (me?.user_id) {
+				window.location.assign(homeUrl());
+			}
+		}
+	} catch {
+		// Not signed in; stay on login page.
 	}
 }
 
