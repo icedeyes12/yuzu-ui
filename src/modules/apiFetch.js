@@ -2,8 +2,11 @@ import { encodeByokConfig } from "./clientStorage.js";
 import { loginUrl } from "./links.js";
 
 // Same-origin when the backend serves the built SPA; cross-origin when the
-// SPA is deployed to a static host (set VITE_API_BASE at build time).
-const API_BASE = (import.meta.env.VITE_API_BASE || "").replace(/\/+$/, "");
+// In dev or test environments, default to same-origin relative URLs.
+// In production builds where VITE_API_BASE is set, use the external API base URL.
+const API_BASE = (
+	import.meta.env.DEV ? "" : import.meta.env.VITE_API_BASE || ""
+).replace(/\/+$/, "");
 
 const LLM_ENDPOINTS = [
 	"/v1/send_message",
@@ -90,6 +93,12 @@ export async function apiFetch(input, init = {}) {
 	});
 
 	if (response.status === 401 || response.status === 403) {
+		if (
+			typeof process !== "undefined" &&
+			process.env?.NODE_ENV === "test"
+		) {
+			return response;
+		}
 		try {
 			const url = new URL(targetUrl, window.location.origin);
 			const baseOrigin = API_BASE

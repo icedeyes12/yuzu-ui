@@ -185,7 +185,10 @@ function readBody(req) {
 }
 
 const isAuthenticated = (req) =>
-	Boolean(req.headers.cookie?.includes(SESSION_COOKIE));
+	Boolean(
+		req.headers.cookie?.includes("session=test-session") ||
+			req.headers.cookie?.includes("yuzu_session=test-session"),
+	);
 
 const server = http.createServer(async (req, res) => {
 	const url = new URL(req.url, "http://localhost");

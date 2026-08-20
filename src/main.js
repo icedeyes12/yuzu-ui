@@ -81,19 +81,16 @@ export async function bootApp({ page } = {}) {
 	try {
 		const me = await bootstrapAuth({ redirectOnUnauthorized: true });
 		if (!me) {
-			// In case redirect hasn't happened yet, guarantee redirect to login
-			redirectToLogin();
 			return null;
 		}
 
-		// Authenticated: reveal layout and mount the sidebar after first paint
+		// Authenticated: reveal layout and mount the sidebar immediately
 		document.body.removeAttribute("data-auth-state");
-		mountSidebarWhenIdle();
+		mountSidebar();
 		applySavedTheme();
 		return me;
 	} catch (error) {
 		console.error("[boot] Auth bootstrap failed:", error);
-		// If it was a network error / server offline
 		document.body.setAttribute("data-auth-state", "error");
 		const layout = document.querySelector(".page-layout");
 		if (layout) {

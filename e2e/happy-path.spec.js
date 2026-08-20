@@ -8,6 +8,17 @@ test.beforeEach(async ({ page }) => {
 		.context()
 		.addCookies([
 			{ name: "session", value: "test-session", url: "http://localhost:5173" },
+			{
+				name: "yuzu_session",
+				value: "test-session",
+				url: "http://localhost:5173",
+			},
+			{ name: "session", value: "test-session", url: "http://localhost:5000" },
+			{
+				name: "yuzu_session",
+				value: "test-session",
+				url: "http://localhost:5000",
+			},
 		]);
 	// Keep the shared stub in its base state (other specs mutate it).
 	await fetch(`${STUB}/v1/_reset`, { method: "POST" });
@@ -19,6 +30,7 @@ test("browser back/forward switches sessions without a reload", async ({
 	await page.goto("/chat.html?session=s1", {
 		waitUntil: "domcontentloaded",
 	});
+	await page.waitForSelector("#mainSidebar");
 	await expect(page.getByText("Hi! I'm Session One.")).toBeVisible();
 
 	// Switch to Session Two via the sidebar (pushState, no reload).
@@ -50,6 +62,7 @@ test("renders history, lists sessions, switches, and streams a reply", async ({
 }) => {
 	// 1. Initial history renders for the active session
 	await page.goto("/chat.html", { waitUntil: "domcontentloaded" });
+	await page.waitForSelector("#mainSidebar");
 	await expect(page.getByText("Hi! I'm Session One.")).toBeVisible();
 
 	// 2. Sidebar sessions list populates

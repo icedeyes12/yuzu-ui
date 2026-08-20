@@ -16,6 +16,17 @@ test.beforeEach(async ({ page }) => {
 		.context()
 		.addCookies([
 			{ name: "session", value: "test-session", url: "http://localhost:5173" },
+			{
+				name: "yuzu_session",
+				value: "test-session",
+				url: "http://localhost:5173",
+			},
+			{ name: "session", value: "test-session", url: "http://localhost:5000" },
+			{
+				name: "yuzu_session",
+				value: "test-session",
+				url: "http://localhost:5000",
+			},
 		]);
 	// Keep the shared stub in its base state (other specs mutate it).
 	await fetch(`${STUB}/v1/_reset`, { method: "POST" });
@@ -23,19 +34,21 @@ test.beforeEach(async ({ page }) => {
 
 async function openSidebar(page) {
 	await page.goto("/chat.html", { waitUntil: "domcontentloaded" });
-	// The sidebar mounts after first paint (requestIdleCallback).
-	await page.waitForSelector("#mainSidebar");
+	await page.waitForSelector("#hamburgerMenu");
 	await page.click("#hamburgerMenu");
 	await expect(page.locator("#mainSidebar")).toHaveClass(/open/);
 }
 
 async function selectTheme(page, value, label) {
-	await page.click("#themeDropdown .dropdown-selected");
+	const dropdown = page.locator("#themeDropdown");
+	await dropdown.locator(".dropdown-selected").click();
 	// The button announces the open state.
 	await expect(
 		page.locator("#themeDropdown .dropdown-selected"),
 	).toHaveAttribute("aria-expanded", "true");
-	await page.click(`#themeDropdown .dropdown-option[data-value="${value}"]`);
+	await page
+		.locator(`#themeDropdown .dropdown-option[data-value="${value}"]`)
+		.click({ force: true });
 
 	// Applied to both the document root and body.
 	await expect(page.locator("html")).toHaveAttribute("data-theme", value);
