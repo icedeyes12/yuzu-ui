@@ -13,7 +13,7 @@ export class RouterManager {
 
 	/**
 	 * Initialize router from current URL on page load.
-	 * @returns {string|null} Session ID (UUID) from URL or null
+	 * @returns {string|null} Session ID from URL or null
 	 */
 	initFromURL() {
 		const pathParts = window.location.pathname.split("/").filter((p) => p);
@@ -34,17 +34,16 @@ export class RouterManager {
 
 	/**
 	 * Update URL to reflect current session without page reload.
-	 * @param {string} sessionId - Session ID (UUID) to set in URL
+	 * @param {string} sessionId - Session ID (e.g. ses_... or uuid) to set in URL
 	 */
 	updateUrl(sessionId) {
 		if (!sessionId || sessionId === this.currentSessionId) return;
 		this.currentSessionId = sessionId;
 		const url = new URL(window.location.href);
-		if (url.pathname.startsWith("/chat/")) {
-			url.pathname = `/chat/${sessionId}`;
-			url.searchParams.delete("session");
+		if (url.pathname.includes(".html")) {
+			url.searchParams.set("session", sessionId);
 		} else {
-			url.pathname = `/chat/${sessionId}`;
+			url.pathname = `/chat/${encodeURIComponent(sessionId)}`;
 			url.searchParams.delete("session");
 		}
 		window.history.pushState({ sessionId }, "", url);

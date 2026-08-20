@@ -36,7 +36,7 @@ export function focusChatInput() {
 
 export async function initializeChatSession(sessionId) {
 	if (!sessionId) return false;
-	router.currentSessionId = sessionId;
+	router.updateUrl(sessionId);
 	eventRouter.setActiveView(sessionId);
 	await loadChatHistory(sessionId);
 	return true;
