@@ -55,7 +55,7 @@ function cspPlugin() {
 	return {
 		name: "vite-plugin-csp-injector",
 		transformIndexHtml(html, ctx) {
-			if (ctx.filename && ctx.filename.endsWith("preview-shell.html")) {
+			if (ctx.filename?.endsWith("preview-shell.html")) {
 				return html;
 			}
 			return html.replace(

@@ -41,7 +41,7 @@ jobs:
       - name: Lint (Biome)
         run: |
           echo "::group::Biome Lint & Format Details"
-          bunx @biomejs/biome check src/ e2e/ playwright.config.js vite.config.js || (echo "::error::Biome check failed! Run 'bunx @biomejs/biome check --write src/' to fix." && exit 1)
+          npx @biomejs/biome check src/ e2e/ playwright.config.js vite.config.js || (echo "::error::Biome check failed! Run 'npx @biomejs/biome check --write src/' to fix." && exit 1)
           echo "::endgroup::"
 
       - name: Unit tests

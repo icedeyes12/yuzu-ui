@@ -1,5 +1,4 @@
 import { mountSidebar } from "./components/sidebar.js";
-import { redirectToLogin } from "./modules/apiFetch.js";
 import { bootstrapAuth } from "./modules/authBootstrap.js";
 import { applySavedTheme } from "./modules/theme.js";
 
@@ -12,7 +11,7 @@ import { applySavedTheme } from "./modules/theme.js";
  * callback fires, the mount is flushed immediately so the very first
  * interaction behaves correctly.
  */
-function mountSidebarWhenIdle() {
+function _mountSidebarWhenIdle() {
 	let mounted = false;
 	let idleHandle = null;
 	let timeoutHandle = null;

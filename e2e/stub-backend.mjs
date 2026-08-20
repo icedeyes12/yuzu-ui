@@ -10,7 +10,7 @@
 // POST /v1/_reset (called from test beforeEach).
 import http from "node:http";
 
-const SESSION_COOKIE = "session=test-session";
+const _SESSION_COOKIE = "session=test-session";
 
 const baseTs = Date.now();
 const iso = (ms) => new Date(ms).toISOString();

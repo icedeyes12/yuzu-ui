@@ -12,22 +12,20 @@ const THEMES = [
 ];
 
 test.beforeEach(async ({ page }) => {
-	await page
-		.context()
-		.addCookies([
-			{ name: "session", value: "test-session", url: "http://localhost:5173" },
-			{
-				name: "yuzu_session",
-				value: "test-session",
-				url: "http://localhost:5173",
-			},
-			{ name: "session", value: "test-session", url: "http://localhost:5000" },
-			{
-				name: "yuzu_session",
-				value: "test-session",
-				url: "http://localhost:5000",
-			},
-		]);
+	await page.context().addCookies([
+		{ name: "session", value: "test-session", url: "http://localhost:5173" },
+		{
+			name: "yuzu_session",
+			value: "test-session",
+			url: "http://localhost:5173",
+		},
+		{ name: "session", value: "test-session", url: "http://localhost:5000" },
+		{
+			name: "yuzu_session",
+			value: "test-session",
+			url: "http://localhost:5000",
+		},
+	]);
 	// Keep the shared stub in its base state (other specs mutate it).
 	await fetch(`${STUB}/v1/_reset`, { method: "POST" });
 });

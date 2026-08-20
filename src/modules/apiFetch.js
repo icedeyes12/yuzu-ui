@@ -93,12 +93,6 @@ export async function apiFetch(input, init = {}) {
 	});
 
 	if (response.status === 401 || response.status === 403) {
-		if (
-			typeof process !== "undefined" &&
-			process.env?.NODE_ENV === "test"
-		) {
-			return response;
-		}
 		try {
 			const url = new URL(targetUrl, window.location.origin);
 			const baseOrigin = API_BASE
