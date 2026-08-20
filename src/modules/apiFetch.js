@@ -31,6 +31,9 @@ export function redirectToLogin() {
 		currentPath !== "/login.html" &&
 		!currentPath.endsWith("/login.html")
 	) {
+		console.warn(
+			`[apiFetch] Redirecting to login from ${currentPath} due to unauthorized /v1/ call`,
+		);
 		window.location.assign(loginUrl());
 	}
 }
