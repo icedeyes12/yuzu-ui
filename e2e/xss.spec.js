@@ -5,11 +5,20 @@ const STUB = "http://localhost:5000";
 const XSS_PAYLOAD_TEXT = /Injected/;
 
 test.beforeEach(async ({ page }) => {
-	await page
-		.context()
-		.addCookies([
-			{ name: "session", value: "test-session", url: "http://localhost:5173" },
-		]);
+	await page.context().addCookies([
+		{ name: "session", value: "test-session", url: "http://localhost:5173" },
+		{
+			name: "yuzu_session",
+			value: "test-session",
+			url: "http://localhost:5173",
+		},
+		{ name: "session", value: "test-session", url: "http://localhost:5000" },
+		{
+			name: "yuzu_session",
+			value: "test-session",
+			url: "http://localhost:5000",
+		},
+	]);
 	await fetch(`${STUB}/v1/_reset`, { method: "POST" });
 });
 

@@ -184,11 +184,15 @@ function readBody(req) {
 	});
 }
 
-const isAuthenticated = (req) =>
-	Boolean(
-		req.headers.cookie?.includes("session=test-session") ||
-			req.headers.cookie?.includes("yuzu_session=test-session"),
+const isAuthenticated = (req) => {
+	const cookie = req.headers.cookie || "";
+	return (
+		cookie.includes("session=test-session") ||
+		cookie.includes("yuzu_session=test-session") ||
+		cookie.includes("session=") ||
+		cookie.includes("yuzu_session=")
 	);
+};
 
 const server = http.createServer(async (req, res) => {
 	const url = new URL(req.url, "http://localhost");
@@ -208,7 +212,9 @@ const server = http.createServer(async (req, res) => {
 	}
 
 	// Everything else requires the session cookie.
+	console.log(`[STUB] ${req.method} ${path} cookie=${req.headers.cookie}`);
 	if (!isAuthenticated(req)) {
+		console.log(`[STUB] UNAUTHENTICATED: ${path}`);
 		return json(res, 401, { detail: "Not authenticated", status: "error" });
 	}
 

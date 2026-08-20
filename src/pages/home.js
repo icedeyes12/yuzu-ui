@@ -24,7 +24,7 @@ async function _renderGreeting() {
 	const primaryAction = document.querySelector(".home-primary-action");
 	if (primaryAction && profile.active_session?.id) {
 		const sessionId = profile.active_session.id;
-		primaryAction.href = `/chat.html?session=${encodeURIComponent(sessionId)}`;
+		primaryAction.href = `/chat/${encodeURIComponent(sessionId)}`;
 	}
 }
 

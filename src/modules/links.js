@@ -8,9 +8,7 @@
  * @return {string} The chat page URL.
  */
 export function chatUrl(sessionId) {
-	return sessionId
-		? `/chat.html?session=${encodeURIComponent(sessionId)}`
-		: "/chat.html";
+	return sessionId ? `/chat/${encodeURIComponent(sessionId)}` : "/chat";
 }
 
 /**
@@ -21,26 +19,14 @@ export function homeUrl() {
 	return "/index.html";
 }
 
-/**
- * Build the configuration page URL.
- * @return {string} The configuration page URL.
- */
 export function configUrl() {
 	return "/config.html";
 }
 
-/**
- * Build the URL for the about page.
- * @return {string} The about page URL.
- */
 export function aboutUrl() {
 	return "/about.html";
 }
 
-/**
- * Build the login page URL.
- * @return {string} The login page URL.
- */
 export function loginUrl() {
 	return "/login.html";
 }

@@ -34,18 +34,16 @@ export class RouterManager {
 
 	/**
 	 * Update URL to reflect current session without page reload.
+	 * In SPA clean routing mode, standardizes on /chat/<session_id>.
+	 * Supports both /chat/<session_id> clean routes and /chat.html?session=<id>.
 	 * @param {string} sessionId - Session ID (e.g. ses_... or uuid) to set in URL
 	 */
 	updateUrl(sessionId) {
 		if (!sessionId || sessionId === this.currentSessionId) return;
 		this.currentSessionId = sessionId;
 		const url = new URL(window.location.href);
-		if (url.pathname.includes(".html")) {
-			url.searchParams.set("session", sessionId);
-		} else {
-			url.pathname = `/chat/${encodeURIComponent(sessionId)}`;
-			url.searchParams.delete("session");
-		}
+		url.pathname = `/chat/${encodeURIComponent(sessionId)}`;
+		url.searchParams.delete("session");
 		window.history.pushState({ sessionId }, "", url);
 	}
 

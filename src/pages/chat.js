@@ -76,24 +76,36 @@ async function initializeChat() {
 		const urlSessionId = router.initFromURL();
 		router.setupPopStateHandler(handleSessionSwitch);
 
-		// Single profile fetch: header names + active session id
-		const profileData = await fetchProfile();
-		applyProfileToHeader(profileData);
+		// Parallel fetch: profile (header metadata) and initial chat session
+		const profilePromise = fetchProfile();
+		const configPromise = apiFetch("/v1/config", {
+			headers: { Accept: "application/json" },
+		}).then((res) => (res.ok ? res.json() : {}));
 
-		// Stream state is now fully managed by ConversationStore + EventRouter
-
-		const sessionId = urlSessionId || profileData?.active_session?.id;
-		if (sessionId) {
-			await initializeChatSession(sessionId);
-		} else if (profileData) {
-			chatStore.setError("No active conversation is available.");
+		// If URL carries session ID, boot chat session immediately in parallel
+		let chatBootPromise = null;
+		if (urlSessionId) {
+			chatBootPromise = initializeChatSession(urlSessionId);
 		}
 
-		// Initialize multimodal from the same canonical model metadata as config.
-		const configResponse = await apiFetch("/v1/config", {
-			headers: { Accept: "application/json" },
-		});
-		const config = configResponse.ok ? await configResponse.json() : {};
+		const [profileData, config] = await Promise.all([
+			profilePromise,
+			configPromise,
+		]);
+		applyProfileToHeader(profileData);
+
+		if (!urlSessionId) {
+			const activeId = profileData?.active_session?.id;
+			if (activeId) {
+				await initializeChatSession(activeId);
+			} else if (profileData) {
+				chatStore.setError("No active conversation is available.");
+			}
+		} else if (chatBootPromise) {
+			await chatBootPromise;
+		}
+
+		// Initialize multimodal from the resolved config
 		const provider =
 			config.current_provider || config.ai_providers?.current_provider;
 		const model = config.current_model || config.ai_providers?.current_model;

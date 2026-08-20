@@ -14,11 +14,24 @@ export function getSavedTheme() {
 		const saved = localStorage.getItem(userKey);
 		if (saved) return saved;
 	}
-	return (
-		localStorage.getItem("theme") ||
-		document.documentElement.getAttribute("data-theme") ||
-		DEFAULT_THEME
-	);
+	// Fallback to generic theme or localStorage
+	const generic = localStorage.getItem("theme");
+	if (generic) return generic;
+
+	// Check any user_*_theme key if userKey is not yet set during early paint
+	try {
+		for (let i = 0; i < localStorage.length; i++) {
+			const key = localStorage.key(i);
+			if (key?.startsWith("user_") && key.endsWith("_theme")) {
+				const val = localStorage.getItem(key);
+				if (val) return val;
+			}
+		}
+	} catch {
+		// Ignore localStorage read errors in sandboxed contexts
+	}
+
+	return document.documentElement.getAttribute("data-theme") || DEFAULT_THEME;
 }
 
 /**

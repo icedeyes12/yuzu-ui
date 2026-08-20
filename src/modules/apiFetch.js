@@ -93,17 +93,21 @@ export async function apiFetch(input, init = {}) {
 	});
 
 	if (response.status === 401 || response.status === 403) {
-		try {
-			const url = new URL(targetUrl, window.location.origin);
-			const baseOrigin = API_BASE
-				? new URL(API_BASE, window.location.origin).origin
-				: window.location.origin;
-			if (url.origin === baseOrigin && url.pathname.includes("/v1/")) {
-				redirectToLogin();
-			}
-		} catch {
-			if (targetUrl.includes("/v1/")) {
-				redirectToLogin();
+		// Only redirect if on protected pages (not already login)
+		const pathname = window.location.pathname;
+		if (!pathname.includes("login") && !targetUrl.includes("/v1/auth/me")) {
+			try {
+				const url = new URL(targetUrl, window.location.origin);
+				const baseOrigin = API_BASE
+					? new URL(API_BASE, window.location.origin).origin
+					: window.location.origin;
+				if (url.origin === baseOrigin && url.pathname.includes("/v1/")) {
+					redirectToLogin();
+				}
+			} catch {
+				if (targetUrl.includes("/v1/")) {
+					redirectToLogin();
+				}
 			}
 		}
 	}

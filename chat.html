@@ -28,8 +28,19 @@
   <link rel="stylesheet" href="/src/styles/components/code-blocks.css">
   <script>
     (() => {
-      const theme = localStorage.getItem("theme") || "stellar-night-suisei";
-      document.documentElement.setAttribute("data-theme", theme);
+      try {
+        let theme = localStorage.getItem("theme");
+        if (!theme) {
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith("user_") && key.endsWith("_theme")) {
+              theme = localStorage.getItem(key);
+              if (theme) break;
+            }
+          }
+        }
+        document.documentElement.setAttribute("data-theme", theme || "stellar-night-suisei");
+      } catch (e) {}
     })();
   </script>
 </head>

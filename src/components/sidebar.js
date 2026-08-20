@@ -423,8 +423,20 @@ function loadSidebarSessions() {
 	if (!sessionSection || !sessionsList) return;
 
 	sessionSection.classList.add("is-visible");
-	sessionsList.innerHTML =
-		'<li class="loading" role="status" aria-live="polite">Loading sessions...</li>';
+	sessionsList.innerHTML = `
+		<li class="skeleton-sidebar-item">
+			<div class="skeleton skeleton-sidebar-text"></div>
+			<div class="skeleton skeleton-sidebar-meta"></div>
+		</li>
+		<li class="skeleton-sidebar-item">
+			<div class="skeleton skeleton-sidebar-text" style="width: 60%"></div>
+			<div class="skeleton skeleton-sidebar-meta" style="width: 40%"></div>
+		</li>
+		<li class="skeleton-sidebar-item">
+			<div class="skeleton skeleton-sidebar-text" style="width: 75%"></div>
+			<div class="skeleton skeleton-sidebar-meta" style="width: 50%"></div>
+		</li>
+	`;
 
 	apiFetch("/v1/sessions/list", { headers: { Accept: "application/json" } })
 		.then((response) => {
