@@ -39,13 +39,22 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Lint (Biome)
-        run: bunx @biomejs/biome check src/ e2e/ playwright.config.js vite.config.js
+        run: |
+          echo "::group::Biome Lint & Format Details"
+          bunx @biomejs/biome check src/ e2e/ playwright.config.js vite.config.js || (echo "::error::Biome check failed! Run 'bunx @biomejs/biome check --write src/' to fix." && exit 1)
+          echo "::endgroup::"
 
       - name: Unit tests
-        run: bun run test
+        run: |
+          echo "::group::Vitest Details"
+          bun run test || (echo "::error::Vitest unit tests failed!" && exit 1)
+          echo "::endgroup::"
 
       - name: Build
-        run: bun run build
+        run: |
+          echo "::group::Vite Production Build Details"
+          bun run build || (echo "::error::Vite build failed!" && exit 1)
+          echo "::endgroup::"
 
       - name: E2E tests
         run: bun run test:e2e
