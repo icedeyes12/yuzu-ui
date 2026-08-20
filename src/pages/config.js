@@ -200,7 +200,7 @@ async function loadAppConfig() {
 			headers: { Accept: "application/json" },
 		});
 		const data = await readJsonResponse(response);
-		if (!response.ok || data.status !== "success") {
+		if (!response.ok) {
 			throw new Error(getApiError(data, response.status));
 		}
 		appConfig = data;
