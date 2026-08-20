@@ -20,6 +20,12 @@ async function _renderGreeting() {
 	if (intro && profile.partner_name) {
 		intro.textContent = `Continue with ${profile.partner_name} whenever you are ready. No setup required.`;
 	}
+
+	const primaryAction = document.querySelector(".home-primary-action");
+	if (primaryAction && profile.active_session?.id) {
+		const sessionId = profile.active_session.id;
+		primaryAction.href = `/chat.html?session=${encodeURIComponent(sessionId)}`;
+	}
 }
 
 /**

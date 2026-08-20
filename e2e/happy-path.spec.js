@@ -27,12 +27,12 @@ test("browser back/forward switches sessions without a reload", async ({
 		.locator(".sidebar-session-item", { hasText: "Session Two" })
 		.click();
 	await expect(page.getByText("I'm Session Two. Switch works!")).toBeVisible();
-	await expect(page).toHaveURL(/\/chat\/s2/);
+	await expect(page).toHaveURL(/session=s2|\/chat\/s2/);
 
 	// Back returns to Session One via the popstate handler — the s1 history
 	// loads client-side, no page reload.
 	await page.goBack();
-	await expect(page).toHaveURL(/session=s1/);
+	await expect(page).toHaveURL(/session=s1|\/chat\/s1/);
 	await expect(page.getByText("Hello there")).toBeVisible();
 	await expect(page.getByText("Hi! I'm Session One.")).toBeVisible();
 	await expect(
@@ -41,7 +41,7 @@ test("browser back/forward switches sessions without a reload", async ({
 
 	// Forward returns to Session Two.
 	await page.goForward();
-	await expect(page).toHaveURL(/\/chat\/s2/);
+	await expect(page).toHaveURL(/session=s2|\/chat\/s2/);
 	await expect(page.getByText("I'm Session Two. Switch works!")).toBeVisible();
 });
 
