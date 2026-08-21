@@ -7,7 +7,10 @@ async function init() {
 	for (const link of document.querySelectorAll("[data-auth-provider]")) {
 		const provider = link.dataset.authProvider;
 		if (provider) {
-			link.href = apiUrl(`/v1/auth/login?provider=${provider}`);
+			const currentOrigin = window.location.origin;
+			link.href = apiUrl(
+				`/v1/auth/login?provider=${provider}&origin=${encodeURIComponent(currentOrigin + "/chat.html")}`,
+			);
 		}
 	}
 
