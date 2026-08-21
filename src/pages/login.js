@@ -7,14 +7,17 @@ async function init() {
 	for (const link of document.querySelectorAll("[data-auth-provider]")) {
 		const provider = link.dataset.authProvider;
 		if (provider) {
-			const currentOrigin = window.location.origin;
+			// Redirect target on origin
+			const origin = window.location.origin;
+			const redirectPath = "/chat.html";
+			const loginTarget = `${origin}${redirectPath}`;
 			link.href = apiUrl(
-				`/v1/auth/login?provider=${provider}&origin=${encodeURIComponent(currentOrigin + "/chat.html")}`,
+				`/v1/auth/login?provider=${provider}&origin=${encodeURIComponent(loginTarget)}`,
 			);
 		}
 	}
 
-	// Already signed in? Skip the login page.
+	// Already signed in? Skip the login page to chat directly.
 	try {
 		const response = await apiFetch("/v1/auth/me", {
 			headers: { Accept: "application/json" },
@@ -22,7 +25,7 @@ async function init() {
 		if (response.ok) {
 			const me = await response.json();
 			if (me?.user_id) {
-				window.location.assign(homeUrl());
+				window.location.assign("/chat.html");
 			}
 		}
 	} catch {
