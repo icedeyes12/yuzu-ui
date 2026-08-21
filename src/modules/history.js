@@ -25,23 +25,26 @@ async function _loadOlderMessages() {
 	if (!beforeTs) return;
 
 	isLoadingOlder = true;
+	const sessionAtFetch = currentHistorySessionId;
 	const chatContainer = document.getElementById("chatContainer");
 
 	try {
 		const res = await apiFetch(
-			`/v1/chat_history/before?session_id=${encodeURIComponent(currentHistorySessionId)}&before_ts=${encodeURIComponent(beforeTs)}&limit=50`,
+			`/v1/chat_history/before?session_id=${encodeURIComponent(sessionAtFetch)}&before_ts=${encodeURIComponent(beforeTs)}&limit=50`,
 			{ headers: { Accept: "application/json" } },
 		);
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const data = await res.json();
+
+		// Discard results if user switched sessions while fetch was in flight
+		if (sessionAtFetch !== currentHistorySessionId) return;
+
 		const older = Array.isArray(data.chat_history) ? data.chat_history : [];
 
 		// Preserve scroll position before prepending
 		const oldScrollHeight = chatContainer ? chatContainer.scrollHeight : 0;
-		chatStore.prependHistory(older, data.has_more ?? false);
-		// Scroll correction happens in DOMRenderer on "prepend" event using saved oldScrollHeight.
-		// We stash it on the container so the renderer can pick it up.
 		if (chatContainer) chatContainer._prependOldScrollHeight = oldScrollHeight;
+		chatStore.prependHistory(older, data.has_more ?? false);
 
 		olderMessagesLoaded += older.length;
 	} finally {

@@ -23,7 +23,7 @@
 .typing-indicator span {
 	width: 8px;
 	height: 8px;
-	background: var(--text-secondary);
+	background: var(--text-primary);
 	border-radius: 50%;
 	animation: typing-bounce 1.4s var(--motion-easing-standard)
 		var(--motion-repeat-loop) both;

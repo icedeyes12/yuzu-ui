@@ -4,9 +4,7 @@ import { loginUrl } from "./links.js";
 // Same-origin when the backend serves the built SPA; cross-origin when the
 // In dev or test environments, default to same-origin relative URLs.
 // In production builds where VITE_API_BASE is set, use the external API base URL.
-const API_BASE = (
-	import.meta.env.DEV ? "" : import.meta.env.VITE_API_BASE || ""
-).replace(/\/+$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE || "").replace(/\/+$/, "");
 
 const LLM_ENDPOINTS = [
 	"/v1/send_message",

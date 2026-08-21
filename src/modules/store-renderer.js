@@ -103,6 +103,13 @@ export class DOMRenderer {
 
 	render(messages, isGenerating, error = null, eventObj = null) {
 		if (!this.container) return;
+
+		// When history is reset or loaded, clear any initial static skeleton
+		if (eventObj?.type === "reset") {
+			const skeleton = document.getElementById("chatSkeletonContainer");
+			if (skeleton) skeleton.remove();
+		}
+
 		const newRenderedIds = new Set();
 		const isPrepend = eventObj?.type === "prepend";
 		const firstOldElement = isPrepend ? this.container.firstElementChild : null;
@@ -179,6 +186,19 @@ export class DOMRenderer {
 		if (shouldSuppressCopy) {
 			parentCopyButton?.remove();
 		}
+
+		// Assistant message is actively generating with no content yet -> render unified typing indicator
+		if (msg.role === "assistant" && !msg.content && chatStore.isGenerating) {
+			el.classList.add("message--typing");
+			contentContainer.innerHTML = `
+				<div class="typing-indicator" aria-label="Assistant is typing">
+					<span></span><span></span><span></span>
+				</div>
+			`;
+			return;
+		}
+
+		el.classList.remove("message--typing");
 		const messageHash = JSON.stringify([
 			msg.content || "",
 			msg.metadata?.isFrozen ?? false,
@@ -261,11 +281,16 @@ export class DOMRenderer {
 		void loadKatex().then(renderMath);
 	}
 
-	_syncTypingIndicator(_messages, isGenerating) {
+	_syncTypingIndicator(messages, isGenerating) {
+		const hasActiveAssistant = messages.some(
+			(m) => m.role === "assistant" && !m.metadata?.isFrozen,
+		);
 		if (this.activeTypingIndicator && !this.activeTypingIndicator.isConnected) {
 			this.activeTypingIndicator = null;
 		}
-		if (isGenerating && !this.activeTypingIndicator) {
+		// If an assistant message is already rendered in the DOM, the indicator is inside its bubble.
+		// Only show the standalone fallback indicator if generation is active but no assistant message exists.
+		if (isGenerating && !hasActiveAssistant && !this.activeTypingIndicator) {
 			this.activeTypingIndicator = document.createElement("div");
 			this.activeTypingIndicator.className = "typing-indicator";
 			this.activeTypingIndicator.setAttribute(
@@ -278,7 +303,7 @@ export class DOMRenderer {
 			scrollToBottom();
 			return;
 		}
-		if (!isGenerating && this.activeTypingIndicator) {
+		if ((!isGenerating || hasActiveAssistant) && this.activeTypingIndicator) {
 			this.activeTypingIndicator.remove();
 			this.activeTypingIndicator = null;
 		}

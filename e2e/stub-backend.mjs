@@ -212,13 +212,15 @@ const server = http.createServer(async (req, res) => {
 	}
 
 	// Everything else requires the session cookie.
-	console.log(`[STUB] ${req.method} ${path} cookie=${req.headers.cookie}`);
 	if (!isAuthenticated(req)) {
-		console.log(`[STUB] UNAUTHENTICATED: ${path}`);
 		return json(res, 401, { detail: "Not authenticated", status: "error" });
 	}
 
 	if (path === "/v1/auth/me") {
+		console.log(
+			"[STUB] Handling /v1/auth/me, isAuthenticated =",
+			isAuthenticated(req),
+		);
 		return json(res, 200, {
 			status: "success",
 			user_id: "user-123",

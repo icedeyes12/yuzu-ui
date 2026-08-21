@@ -13,12 +13,13 @@
 	display: flex;
 	flex-direction: column;
 	backdrop-filter: var(--backdrop-blur);
-	box-shadow: var(--shadow-xl);
+	box-shadow: none;
 	overflow: hidden;
 }
 
 .sidebar.open {
 	left: 0;
+	box-shadow: var(--shadow-xl);
 }
 
 .sidebar-overlay {

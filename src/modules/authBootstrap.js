@@ -14,26 +14,30 @@ export function getCachedMe() {
  * @returns {Promise<object|null>} The /me payload, or null when unauthenticated.
  */
 export async function bootstrapAuth({ redirectOnUnauthorized = true } = {}) {
-	if (cachedMe) return cachedMe;
+	try {
+		const response = await apiFetch("/v1/auth/me", {
+			headers: { Accept: "application/json" },
+		});
 
-	const response = await apiFetch("/v1/auth/me", {
-		headers: { Accept: "application/json" },
-	});
+		if (response.status === 401 || response.status === 403) {
+			if (redirectOnUnauthorized) redirectToLogin();
+			return null;
+		}
 
-	if (response.status === 401 || response.status === 403) {
+		if (!response.ok) {
+			throw new Error(`Failed to load session: HTTP ${response.status}`);
+		}
+
+		cachedMe = await response.json();
+		if (cachedMe?.user_id) {
+			setStorageNamespace(cachedMe.user_id);
+		}
+		return cachedMe;
+	} catch (err) {
+		console.error("[bootstrapAuth] Error:", err);
 		if (redirectOnUnauthorized) redirectToLogin();
 		return null;
 	}
-
-	if (!response.ok) {
-		throw new Error(`Failed to load session: HTTP ${response.status}`);
-	}
-
-	cachedMe = await response.json();
-	if (cachedMe?.user_id) {
-		setStorageNamespace(cachedMe.user_id);
-	}
-	return cachedMe;
 }
 
 export function resetBootstrap() {
