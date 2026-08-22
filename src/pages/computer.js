@@ -5,7 +5,6 @@
 
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
-import { toggleSidebar } from "../components/sidebar.js";
 import { bootApp } from "../main.js";
 import { apiUrl } from "../modules/apiFetch.js";
 import { SandboxService } from "../modules/sandbox-service.js";
@@ -46,11 +45,6 @@ async function init() {
 	metaDistro = document.getElementById("metaDistro");
 	metaGeneration = document.getElementById("metaGeneration");
 	metaStorage = document.getElementById("metaStorage");
-
-	const hamburgerMenu = document.getElementById("hamburgerMenu");
-	if (hamburgerMenu) {
-		hamburgerMenu.addEventListener("click", () => toggleSidebar());
-	}
 
 	bindActions();
 	await checkStatus();
@@ -305,9 +299,8 @@ function connectWebSocket() {
 		socket = new WebSocket(wsUrl);
 
 		socket.onopen = () => {
-			setTerminalState("connected", "Connected");
+			setTerminalState("connecting", "Starting shell...");
 			if (terminal) {
-				terminal.focus();
 				// Trigger initial resize framing
 				if (fitAddon) {
 					fitAddon.fit();
@@ -325,8 +318,13 @@ function connectWebSocket() {
 		socket.onmessage = (event) => {
 			try {
 				const payload = JSON.parse(event.data);
-				if (payload.type === "output" && terminal) {
+				if (payload.type === "ready" && terminal) {
+					setTerminalState("connected", "Connected");
+					terminal.focus();
+				} else if (payload.type === "output" && terminal) {
 					terminal.write(payload.data);
+				} else if (payload.type === "error") {
+					setTerminalState("failed", payload.message || "PTY failed");
 				}
 			} catch {
 				if (terminal) terminal.write(event.data);
@@ -345,7 +343,11 @@ function connectWebSocket() {
 
 		if (terminal) {
 			terminal.onData((data) => {
-				if (socket && socket.readyState === WebSocket.OPEN) {
+				if (
+					_terminalState === "connected" &&
+					socket &&
+					socket.readyState === WebSocket.OPEN
+				) {
 					socket.send(JSON.stringify({ type: "input", data }));
 				}
 			});

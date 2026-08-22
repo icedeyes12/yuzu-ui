@@ -13,6 +13,7 @@ const ROUTE_ENTRIES = {
 	"/": "index.html",
 	"/login": "login.html",
 	"/chat": "chat.html",
+	"/computer": "computer.html",
 	"/config": "config.html",
 	"/about": "about.html",
 };

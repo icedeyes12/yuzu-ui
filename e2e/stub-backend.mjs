@@ -259,6 +259,9 @@ const server = http.createServer(async (req, res) => {
 			profile: {},
 		});
 	}
+	if (path === "/v1/sandbox/status") {
+		return json(res, 200, { has_sandbox: false, state: "none" });
+	}
 	if (path === "/v1/sessions/list") {
 		return json(res, 200, { status: "success", sessions });
 	}

@@ -21,7 +21,7 @@ export default defineConfig({
 			reuseExistingServer: !process.env.CI,
 		},
 		{
-			command: "bun run dev",
+			command: "VITE_API_BASE=http://localhost:5000 bun run dev",
 			port: 5173,
 			reuseExistingServer: !process.env.CI,
 		},
