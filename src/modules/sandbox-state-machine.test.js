@@ -42,6 +42,8 @@ describe("My Computer State Machine & API Integration", () => {
 			json: async () => ({ detail: "Database unavailable" }),
 		});
 
-		await expect(SandboxService.getStatus()).rejects.toThrow("Database unavailable");
+		await expect(SandboxService.getStatus()).rejects.toThrow(
+			"Database unavailable",
+		);
 	});
 });

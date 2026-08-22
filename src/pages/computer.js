@@ -1,8 +1,10 @@
 /**
  * My Computer Page Controller.
- * Manages State Transitions, xterm.js Terminal & PTY WebSocket.
+ * Manages State Transitions, xterm.js Terminal & PTY WebSocket with Proper Lifecycle.
  */
 
+import { FitAddon } from "@xterm/addon-fit";
+import { Terminal } from "@xterm/xterm";
 import { toggleSidebar } from "../components/sidebar.js";
 import { bootApp } from "../main.js";
 import { apiUrl } from "../modules/apiFetch.js";
@@ -10,9 +12,17 @@ import { SandboxService } from "../modules/sandbox-service.js";
 
 // DOM Elements
 let viewBootstrapping, viewEmpty, viewTransition, viewReady, viewFailed;
-let sandboxBadge, connStatus, failedDesc;
+let sandboxBadge, computerStatusSubtitle, connStatus, connStatusDot, failedDesc;
+let metaDistro, metaGeneration, metaStorage, managePanel, btnToggleManage;
 let termContainer;
-let terminal, fitAddon, socket;
+let terminal = null;
+let fitAddon = null;
+let socket = null;
+let resizeObserver = null;
+let currentStatus = null;
+
+// Terminal State Machine: 'idle' | 'connecting' | 'connected' | 'disconnected' | 'failed'
+let _terminalState = "idle";
 
 async function init() {
 	const me = await bootApp({ page: "computer" });
@@ -26,12 +36,20 @@ async function init() {
 	viewFailed = document.getElementById("viewFailed");
 	failedDesc = document.getElementById("failedDesc");
 	sandboxBadge = document.getElementById("sandboxBadge");
+	computerStatusSubtitle = document.getElementById("computerStatusSubtitle");
 	connStatus = document.getElementById("connStatus");
+	connStatusDot = document.getElementById("connStatusDot");
 	termContainer = document.getElementById("terminalContainer");
+	managePanel = document.getElementById("managePanel");
+	btnToggleManage = document.getElementById("btnToggleManage");
 
-	const sidebarToggle = document.getElementById("sidebarToggle");
-	if (sidebarToggle) {
-		sidebarToggle.addEventListener("click", () => toggleSidebar());
+	metaDistro = document.getElementById("metaDistro");
+	metaGeneration = document.getElementById("metaGeneration");
+	metaStorage = document.getElementById("metaStorage");
+
+	const hamburgerMenu = document.getElementById("hamburgerMenu");
+	if (hamburgerMenu) {
+		hamburgerMenu.addEventListener("click", () => toggleSidebar());
 	}
 
 	bindActions();
@@ -39,6 +57,13 @@ async function init() {
 }
 
 function bindActions() {
+	if (btnToggleManage && managePanel) {
+		btnToggleManage.addEventListener("click", () => {
+			const isHidden = managePanel.classList.toggle("hidden");
+			btnToggleManage.setAttribute("aria-expanded", String(!isHidden));
+		});
+	}
+
 	const formProvision = document.getElementById("formProvision");
 	if (formProvision) {
 		formProvision.addEventListener("submit", async (e) => {
@@ -109,8 +134,8 @@ function bindActions() {
 
 async function checkStatus() {
 	try {
-		const status = await SandboxService.getStatus();
-		updateUI(status);
+		currentStatus = await SandboxService.getStatus();
+		updateUI(currentStatus);
 	} catch (err) {
 		console.error("Status check failed", err);
 		showView("failed");
@@ -123,8 +148,11 @@ async function checkStatus() {
 
 function updateUI(status) {
 	if (!status?.has_sandbox || status.state === "none") {
+		cleanupTerminal();
 		showView("empty");
 		if (sandboxBadge) sandboxBadge.textContent = "Not Provisioned";
+		if (computerStatusSubtitle)
+			computerStatusSubtitle.textContent = "No Environment";
 		return;
 	}
 
@@ -132,14 +160,28 @@ function updateUI(status) {
 		showView("ready");
 		if (sandboxBadge)
 			sandboxBadge.textContent = `${status.distribution} (Ready)`;
+		if (computerStatusSubtitle)
+			computerStatusSubtitle.textContent = `${status.distribution} 12 · Ready`;
+
+		// Populate secondary management metadata
+		if (metaDistro) metaDistro.textContent = status.distribution || "Debian";
+		if (metaGeneration)
+			metaGeneration.textContent = `Gen ${status.generation || 1}`;
+		if (metaStorage)
+			metaStorage.textContent = `${Math.round((status.storage_limit_bytes || 10737418240) / 1073741824)} GiB Limit`;
+
 		initTerminal();
 	} else if (status.state === "failed") {
+		cleanupTerminal();
 		showView("failed");
 		if (failedDesc)
 			failedDesc.textContent =
 				status.last_error || "Sandbox provisioning failed.";
 		if (sandboxBadge) sandboxBadge.textContent = "Failed";
+		if (computerStatusSubtitle)
+			computerStatusSubtitle.textContent = "Provisioning Failed";
 	} else {
+		cleanupTerminal();
 		showTransition(`Status: ${status.state}`, "Sandbox is transitioning...");
 		pollUntilReady();
 	}
@@ -183,51 +225,101 @@ function pollUntilReady() {
 	}, 2000);
 }
 
+function setTerminalState(state, message = "") {
+	_terminalState = state;
+	if (connStatus) connStatus.textContent = message || state;
+	if (connStatusDot) {
+		connStatusDot.className = `status-dot ${state}`;
+	}
+}
+
 function initTerminal() {
 	if (terminal || !termContainer) return;
 
-	if (window.Terminal) {
-		terminal = new window.Terminal({
-			theme: {
-				background: "#0d1117",
-				foreground: "#c9d1d9",
-				cursor: "#58a6ff",
-			},
-			fontSize: 14,
-			fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-		});
+	termContainer.innerHTML = ""; // Clear any placeholder
 
-		if (window.FitAddon) {
-			fitAddon = new window.FitAddon.FitAddon();
-			terminal.loadAddon(fitAddon);
-		}
+	terminal = new Terminal({
+		theme: {
+			background: "#000000",
+			foreground: "#c9d1d9",
+			cursor: "#58a6ff",
+			selectionBackground: "#388bfd33",
+		},
+		fontSize: 14,
+		fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+		cursorBlink: true,
+		allowProposedApi: true,
+	});
 
-		terminal.open(termContainer);
-		if (fitAddon) fitAddon.fit();
+	fitAddon = new FitAddon();
+	terminal.loadAddon(fitAddon);
+	terminal.open(termContainer);
 
-		connectWebSocket();
-	} else {
-		termContainer.innerHTML =
-			'<div class="alert alert-info" style="color:white;padding:1rem;">Connecting to PTY stream...</div>';
-		connectWebSocket();
+	try {
+		fitAddon.fit();
+	} catch (e) {
+		console.warn("Initial fitAddon failed:", e);
 	}
+
+	// Setup ResizeObserver for responsive layout changes & mobile orientation
+	if (window.ResizeObserver) {
+		resizeObserver = new ResizeObserver(() => {
+			if (fitAddon && terminal) {
+				try {
+					fitAddon.fit();
+					if (socket && socket.readyState === WebSocket.OPEN) {
+						socket.send(
+							JSON.stringify({
+								type: "resize",
+								cols: terminal.cols,
+								rows: terminal.rows,
+							}),
+						);
+					}
+				} catch (_e) {}
+			}
+		});
+		resizeObserver.observe(termContainer);
+	}
+
+	connectWebSocket();
 }
 
 function connectWebSocket() {
 	const httpEndpoint = apiUrl("/v1/sandbox/terminal/ws");
-	const wsUrl = httpEndpoint.replace(/^http/, "ws");
+	// Ensure secure wss: on https origins
+	let wsUrl = httpEndpoint;
+	if (wsUrl.startsWith("https://")) {
+		wsUrl = wsUrl.replace("https://", "wss://");
+	} else if (wsUrl.startsWith("http://")) {
+		wsUrl = wsUrl.replace("http://", "ws://");
+	} else {
+		// Relative path fallback
+		const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+		wsUrl = `${protocol}//${window.location.host}${wsUrl.startsWith("/") ? "" : "/"}${wsUrl}`;
+	}
 
-	if (connStatus) connStatus.textContent = "Connecting...";
+	setTerminalState("connecting", "Connecting to PTY...");
 
 	try {
 		socket = new WebSocket(wsUrl);
 
 		socket.onopen = () => {
-			if (connStatus) connStatus.textContent = "Connected";
-			if (terminal)
-				terminal.writeln(
-					"\x1b[32m[Connected to My Computer Sandbox]\x1b[0m\r\n",
-				);
+			setTerminalState("connected", "Connected");
+			if (terminal) {
+				terminal.focus();
+				// Trigger initial resize framing
+				if (fitAddon) {
+					fitAddon.fit();
+					socket.send(
+						JSON.stringify({
+							type: "resize",
+							cols: terminal.cols,
+							rows: terminal.rows,
+						}),
+					);
+				}
+			}
 		};
 
 		socket.onmessage = (event) => {
@@ -242,9 +334,13 @@ function connectWebSocket() {
 		};
 
 		socket.onclose = () => {
-			if (connStatus) connStatus.textContent = "Disconnected";
+			setTerminalState("disconnected", "Session Disconnected");
 			if (terminal)
 				terminal.writeln("\r\n\x1b[31m[Session Disconnected]\x1b[0m");
+		};
+
+		socket.onerror = () => {
+			setTerminalState("failed", "PTY Connection Error");
 		};
 
 		if (terminal) {
@@ -254,10 +350,35 @@ function connectWebSocket() {
 				}
 			});
 		}
-	} catch (_e) {
-		if (connStatus) connStatus.textContent = "Connection Error";
+	} catch (e) {
+		console.error("PTY WebSocket creation failed:", e);
+		setTerminalState("failed", "Connection Failed");
 	}
 }
+
+function cleanupTerminal() {
+	if (resizeObserver) {
+		resizeObserver.disconnect();
+		resizeObserver = null;
+	}
+	if (socket) {
+		try {
+			socket.close();
+		} catch (_e) {}
+		socket = null;
+	}
+	if (terminal) {
+		try {
+			terminal.dispose();
+		} catch (_e) {}
+		terminal = null;
+		fitAddon = null;
+	}
+	setTerminalState("idle", "");
+}
+
+// Cleanup on navigation away
+window.addEventListener("beforeunload", cleanupTerminal);
 
 // Auto-init on page load
 if (document.readyState === "loading") {

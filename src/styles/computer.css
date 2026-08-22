@@ -1,4 +1,4 @@
-/* My Computer / Sandbox View Styles */
+/* My Computer View Styles — Integrated with Canonical Yuzu Cyber Terminal */
 
 .page-computer .computer-layout {
 	display: flex;
@@ -6,36 +6,17 @@
 	flex: 1;
 	height: 100vh;
 	overflow: hidden;
+	position: relative;
 }
 
 .page-computer .computer-main {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-	height: 100vh;
+	height: calc(100vh - var(--header-height, 56px));
 	overflow: hidden;
-	background: var(--color-bg-primary, #0d1117);
-}
-
-.computer-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 0.75rem 1.25rem;
-	border-bottom: 1px solid var(--color-border-subtle, #30363d);
-	background: var(--color-bg-secondary, #161b22);
-}
-
-.computer-header .header-left {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-}
-
-.computer-header h1 {
-	font-size: 1.15rem;
-	margin: 0;
-	color: var(--color-text-primary, #c9d1d9);
+	background: var(--bg-primary, #0d1117);
+	position: relative;
 }
 
 .computer-content {
@@ -44,6 +25,7 @@
 	flex-direction: column;
 	overflow: hidden;
 	position: relative;
+	height: 100%;
 }
 
 .computer-view {
@@ -51,38 +33,41 @@
 	display: flex;
 	flex-direction: column;
 	height: 100%;
+	position: relative;
 }
 
 .computer-view.hidden {
 	display: none;
 }
 
-/* Empty Setup Card */
+/* Empty, Bootstrapping & Failed View Cards */
 .view-empty,
 .view-bootstrapping,
-.view-failed {
+.view-failed,
+.view-transition {
 	align-items: center;
 	justify-content: center;
 	padding: 1.5rem;
+	overflow-y: auto;
 }
 
 .setup-card {
 	max-width: 480px;
 	width: 100%;
 	padding: 2rem;
-	background: var(--color-bg-secondary, #161b22);
-	border: 1px solid var(--color-border-subtle, #30363d);
+	background: var(--bg-secondary, #161b22);
+	border: 1px solid var(--border-subtle, #30363d);
 	border-radius: 8px;
 }
 
 .setup-card h2 {
 	font-size: 1.25rem;
 	margin-top: 0;
-	color: var(--color-text-primary, #58a6ff);
+	color: var(--text-primary, #58a6ff);
 }
 
 .setup-card .subtitle {
-	color: var(--color-text-secondary, #8b949e);
+	color: var(--text-secondary, #8b949e);
 	margin-bottom: 1.5rem;
 	font-size: 0.9rem;
 	line-height: 1.4;
@@ -96,68 +81,165 @@
 	display: block;
 	font-size: 0.85rem;
 	margin-bottom: 0.4rem;
-	color: var(--color-text-secondary, #8b949e);
+	color: var(--text-secondary, #8b949e);
 }
 
 .setup-form .input-select {
 	width: 100%;
-	padding: 0.5rem;
+	padding: 0.6rem;
 	border-radius: 6px;
-	background: var(--color-bg-primary, #0d1117);
-	border: 1px solid var(--color-border-subtle, #30363d);
-	color: var(--color-text-primary, #c9d1d9);
+	background: var(--bg-primary, #0d1117);
+	border: 1px solid var(--border-subtle, #30363d);
+	color: var(--text-primary, #c9d1d9);
 }
 
 .setup-form .storage-info {
 	display: flex;
 	justify-content: space-between;
 	margin-bottom: 1.25rem;
-	font-size: 0.9rem;
+	font-size: 0.85rem;
+	color: var(--text-muted, #8b949e);
 }
 
-/* Terminal View */
+/* Ready / Active Terminal Surface */
 .view-ready {
 	display: flex;
 	flex-direction: column;
+	overflow: hidden;
+	position: relative;
+	height: 100%;
 }
 
-.terminal-toolbar {
+.terminal-bar {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 0.5rem 1rem;
-	background: var(--color-bg-tertiary, #21262d);
-	border-bottom: 1px solid var(--color-border-subtle, #30363d);
+	padding: 0.4rem 0.85rem;
+	background: var(--bg-tertiary, #161b22);
+	border-bottom: 1px solid var(--border-subtle, #30363d);
+	z-index: 10;
 }
 
+.terminal-bar__left {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.status-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--text-muted, #8b949e);
+}
+
+.status-dot.connected {
+	background: #2ea043;
+	box-shadow: 0 0 6px #2ea04388;
+}
+
+.status-dot.connecting {
+	background: #d29922;
+}
+
+.status-dot.disconnected,
+.status-dot.failed {
+	background: #f85149;
+}
+
+.terminal-status-text {
+	font-size: 0.8rem;
+	color: var(--text-secondary, #8b949e);
+	font-family: monospace;
+}
+
+.btn-manage {
+	background: transparent;
+	border: 1px solid var(--border-subtle, #30363d);
+	color: var(--text-secondary, #c9d1d9);
+	padding: 0.25rem 0.6rem;
+	border-radius: 4px;
+	font-size: 0.8rem;
+	cursor: pointer;
+}
+
+.btn-manage:hover {
+	background: var(--bg-secondary, #21262d);
+	color: var(--text-primary, #ffffff);
+}
+
+/* Secondary Management Panel */
+.manage-panel {
+	background: var(--bg-secondary, #161b22);
+	border-bottom: 1px solid var(--border-subtle, #30363d);
+	padding: 0.75rem 1rem;
+	z-index: 15;
+}
+
+.manage-panel.hidden {
+	display: none;
+}
+
+.manage-panel__inner {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.manage-info {
+	display: flex;
+	gap: 1.5rem;
+	font-size: 0.85rem;
+	color: var(--text-secondary, #8b949e);
+}
+
+.manage-row span {
+	margin-right: 0.25rem;
+}
+
+.manage-row strong {
+	color: var(--text-primary, #c9d1d9);
+}
+
+.manage-actions {
+	display: flex;
+	gap: 0.5rem;
+}
+
+/* Terminal Canvas Mount */
 .terminal-container {
 	flex: 1;
 	width: 100%;
 	height: 100%;
-	padding: 0.5rem;
 	background: #000000;
 	overflow: hidden;
+	padding: 0.25rem;
+	position: relative;
+	z-index: 1; /* Keep z-index lower than sidebar (z-index 100+) */
 }
 
-/* Transition View */
-.view-transition {
-	align-items: center;
-	justify-content: center;
+.terminal-container .xterm {
+	height: 100%;
 }
 
+.terminal-container .xterm-viewport {
+	overflow-y: auto;
+}
+
+/* Transition Card & Spinner */
 .transition-card {
 	text-align: center;
-	padding: 2.5rem;
+	padding: 2rem;
 }
 
 .spinner {
 	border: 3px solid rgba(255, 255, 255, 0.1);
-	border-top: 3px solid var(--color-accent, #58a6ff);
+	border-top: 3px solid var(--accent, #58a6ff);
 	border-radius: 50%;
-	width: 36px;
-	height: 36px;
+	width: 32px;
+	height: 32px;
 	animation: spin 1s linear infinite;
-	margin: 0 auto 1.5rem auto;
+	margin: 0 auto 1.25rem auto;
 }
 
 @keyframes spin {

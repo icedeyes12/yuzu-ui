@@ -10,25 +10,41 @@
   <link rel="stylesheet" href="/src/styles/computer.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css">
 </head>
-<body class="theme-dark page-computer" data-auth-state="loading">
-  <!-- Shared Sidebar Root -->
+<body data-page="computer">
+  <a href="#computerMain" class="skip-link">Skip to content</a>
+
+  <!-- Shared Sidebar Root (Mounted dynamically by bootApp/sidebar.js) -->
   <div id="sidebarRoot"></div>
 
   <div class="page-layout computer-layout">
-    <main class="computer-main">
-      <header class="computer-header">
-        <div class="header-left">
-          <button id="sidebarToggle" class="btn-icon" data-action="toggle-sidebar" aria-label="Toggle Navigation">☰</button>
-          <h1>My Computer</h1>
-          <span id="sandboxBadge" class="badge badge-neutral">Checking...</span>
-        </div>
-        <div class="header-right" id="sandboxMeta">
-          <!-- Dynamic Status info -->
-        </div>
-      </header>
+    <!-- Canonical Yuzu Page Header -->
+    <header class="page-header header-content">
+      <button
+        class="hamburger-menu hamburger"
+        id="hamburgerMenu"
+        data-action="toggle-sidebar"
+        aria-expanded="false"
+        aria-controls="mainSidebar"
+        type="button"
+        aria-label="Open conversations and settings">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
 
+      <div class="header-left header-title">
+        <h1 class="partner-name">My Computer</h1>
+        <div class="session-name" id="computerStatusSubtitle" aria-live="polite">Linux Sandbox</div>
+      </div>
+
+      <div class="header-right header-actions">
+        <span id="sandboxBadge" class="badge badge-neutral">Checking...</span>
+      </div>
+    </header>
+
+    <main class="computer-main" id="computerMain">
       <section class="computer-content">
-        <!-- 0. Bootstrapping / Initial State -->
+        <!-- 0. Bootstrapping State -->
         <div id="viewBootstrapping" class="computer-view view-bootstrapping">
           <div class="card transition-card">
             <div class="spinner"></div>
@@ -66,7 +82,7 @@
           </div>
         </div>
 
-        <!-- 2. Transition / Provisioning State -->
+        <!-- 2. Transition State -->
         <div id="viewTransition" class="computer-view view-transition hidden">
           <div class="card transition-card">
             <div class="spinner"></div>
@@ -77,17 +93,44 @@
 
         <!-- 3. Ready / Active Terminal Surface -->
         <div id="viewReady" class="computer-view view-ready hidden">
-          <div class="terminal-toolbar">
-            <div class="toolbar-left">
-              <span id="connStatus" class="status-indicator">Connecting...</span>
+          <div class="terminal-bar">
+            <div class="terminal-bar__left">
+              <span id="connStatusDot" class="status-dot"></span>
+              <span id="connStatus" class="terminal-status-text">Connecting...</span>
             </div>
-            <div class="toolbar-right">
-              <button id="btnReset" class="btn btn-sm btn-outline-warning">Reset</button>
-              <button id="btnDelete" class="btn btn-sm btn-outline-danger">Delete</button>
+            <div class="terminal-bar__right">
+              <button id="btnToggleManage" class="btn-manage" type="button" aria-expanded="false" aria-controls="managePanel">
+                ⚙ Manage
+              </button>
             </div>
           </div>
 
-          <!-- xterm.js Canvas Mount Point -->
+          <!-- Secondary Collapsible Management Panel -->
+          <div id="managePanel" class="manage-panel hidden">
+            <div class="manage-panel__inner">
+              <div class="manage-info">
+                <div class="manage-row">
+                  <span>Distribution:</span>
+                  <strong id="metaDistro">Debian 12</strong>
+                </div>
+                <div class="manage-row">
+                  <span>Generation:</span>
+                  <strong id="metaGeneration">Gen 1</strong>
+                </div>
+                <div class="manage-row">
+                  <span>Storage:</span>
+                  <strong id="metaStorage">10 GiB Limit</strong>
+                </div>
+              </div>
+
+              <div class="manage-actions">
+                <button id="btnReset" class="btn btn-sm btn-outline-warning" type="button">Reset Sandbox</button>
+                <button id="btnDelete" class="btn btn-sm btn-outline-danger" type="button">Delete My Computer</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active xterm.js Mount Point -->
           <div id="terminalContainer" class="terminal-container"></div>
         </div>
 
@@ -96,7 +139,7 @@
           <div class="card setup-card" style="text-align:center;">
             <h2 style="color:var(--color-danger,#f85149);">Environment Unavailable</h2>
             <p id="failedDesc" class="subtitle">An error occurred while loading your sandbox.</p>
-            <button id="btnRetry" class="btn btn-primary">Retry Status</button>
+            <button id="btnRetry" class="btn btn-primary" type="button">Retry Status</button>
           </div>
         </div>
       </section>
