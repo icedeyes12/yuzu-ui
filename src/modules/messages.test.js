@@ -155,15 +155,20 @@ describe("renderMessageHTML tool image result", () => {
 				name: "image_generate",
 				call_id: "call_123",
 				data: {
-					image_path: "/api/v1/static/generated_images/20260822_105426_test.png",
+					image_path:
+						"/api/v1/static/generated_images/20260822_105426_test.png",
 					prompt: "a cute anime catgirl",
 					model: "flux-schnell",
 				},
 			}),
 		});
 		expect(html).toContain('class="tool-card tool-card--image"');
-		expect(html).toContain('src="/v1/static/generated_images/20260822_105426_test.png"');
-		expect(html).toContain('href="/v1/static/generated_images/20260822_105426_test.png"');
+		expect(html).toContain(
+			'src="/v1/static/generated_images/20260822_105426_test.png"',
+		);
+		expect(html).toContain(
+			'href="/v1/static/generated_images/20260822_105426_test.png"',
+		);
 		expect(html).toContain("a cute anime catgirl");
 		expect(html).toContain("flux-schnell");
 	});
@@ -182,7 +187,9 @@ describe("renderMessageHTML tool image result", () => {
 			}),
 		});
 		expect(html).toContain('class="tool-card tool-card--image"');
-		expect(html).toContain('src="/v1/static/generated_images/20260822_105426_test2.png"');
+		expect(html).toContain(
+			'src="/v1/static/generated_images/20260822_105426_test2.png"',
+		);
 	});
 });
 

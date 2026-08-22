@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { safeImagePath } from "./dom-utils.js";
 import { renderImageCard } from "./cards/image.js";
+import { safeImagePath } from "./dom-utils.js";
 
 describe("safeImagePath regression tests", () => {
 	it("normalizes /api/v1/static/ paths correctly", () => {
@@ -8,25 +8,31 @@ describe("safeImagePath regression tests", () => {
 			safeImagePath("/api/v1/static/generated_images/20260822_105426_test.png"),
 		).toBe("/v1/static/generated_images/20260822_105426_test.png");
 		expect(
-			safeImagePath("/api/v1/static/uploads/4db60f088833415eb2d69cee95084f72.jpg"),
+			safeImagePath(
+				"/api/v1/static/uploads/4db60f088833415eb2d69cee95084f72.jpg",
+			),
 		).toBe("/v1/static/uploads/4db60f088833415eb2d69cee95084f72.jpg");
 	});
 
 	it("normalizes /v1/static/ and relative static paths correctly", () => {
-		expect(
-			safeImagePath("/v1/static/generated_images/sample.png"),
-		).toBe("/v1/static/generated_images/sample.png");
-		expect(
-			safeImagePath("static/generated_images/sample.png"),
-		).toBe("/v1/static/generated_images/sample.png");
-		expect(
-			safeImagePath("generated_images/sample.png"),
-		).toBe("/v1/static/generated_images/sample.png");
+		expect(safeImagePath("/v1/static/generated_images/sample.png")).toBe(
+			"/v1/static/generated_images/sample.png",
+		);
+		expect(safeImagePath("static/generated_images/sample.png")).toBe(
+			"/v1/static/generated_images/sample.png",
+		);
+		expect(safeImagePath("generated_images/sample.png")).toBe(
+			"/v1/static/generated_images/sample.png",
+		);
 	});
 
 	it("rejects traversal and invalid filenames", () => {
-		expect(safeImagePath("/api/v1/static/generated_images/../secret.png")).toBeNull();
-		expect(safeImagePath("/api/v1/static/generated_images/not-an-image.txt")).toBeNull();
+		expect(
+			safeImagePath("/api/v1/static/generated_images/../secret.png"),
+		).toBeNull();
+		expect(
+			safeImagePath("/api/v1/static/generated_images/not-an-image.txt"),
+		).toBeNull();
 		expect(safeImagePath("https://evil.com/image.png")).toBeNull();
 		expect(safeImagePath("")).toBeNull();
 		expect(safeImagePath(null)).toBeNull();
