@@ -1,6 +1,6 @@
 /**
  * Sandbox/My Computer Client Service.
- * Interacts with the /api/v1/sandbox/ API routes.
+ * Interacts with the canonical /v1/sandbox/ API routes via apiFetch.
  */
 
 import { apiFetch } from "./apiFetch.js";
@@ -25,9 +25,12 @@ export const SandboxService = {
 	 * @returns {Promise<SandboxStatus>}
 	 */
 	async getStatus() {
-		const res = await apiFetch("/sandbox/status");
+		const res = await apiFetch("/v1/sandbox/status");
 		if (!res.ok) {
-			throw new Error(`Failed to fetch sandbox status: ${res.statusText}`);
+			const err = await res.json().catch(() => ({}));
+			throw new Error(
+				err.detail || `Failed to fetch sandbox status (${res.status})`,
+			);
 		}
 		return await res.json();
 	},
@@ -39,7 +42,7 @@ export const SandboxService = {
 	 * @returns {Promise<SandboxStatus>}
 	 */
 	async provision(distribution = "debian", version = "12") {
-		const res = await apiFetch("/sandbox/provision", {
+		const res = await apiFetch("/v1/sandbox/provision", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
@@ -49,7 +52,7 @@ export const SandboxService = {
 		});
 		if (!res.ok) {
 			const err = await res.json().catch(() => ({}));
-			throw new Error(err.detail || "Provisioning failed");
+			throw new Error(err.detail || `Provisioning failed (${res.status})`);
 		}
 		return await res.json();
 	},
@@ -59,14 +62,14 @@ export const SandboxService = {
 	 * @param {string} confirmation - Must be 'RESET'
 	 */
 	async reset(confirmation = "RESET") {
-		const res = await apiFetch("/sandbox/reset", {
+		const res = await apiFetch("/v1/sandbox/reset", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ confirmation }),
 		});
 		if (!res.ok) {
 			const err = await res.json().catch(() => ({}));
-			throw new Error(err.detail || "Reset failed");
+			throw new Error(err.detail || `Reset failed (${res.status})`);
 		}
 		return await res.json();
 	},
@@ -77,14 +80,14 @@ export const SandboxService = {
 	 */
 	async deleteSandbox(confirmation = "DELETE") {
 		const res = await apiFetch(
-			`/sandbox?confirmation=${encodeURIComponent(confirmation)}`,
+			`/v1/sandbox?confirmation=${encodeURIComponent(confirmation)}`,
 			{
 				method: "DELETE",
 			},
 		);
 		if (!res.ok) {
 			const err = await res.json().catch(() => ({}));
-			throw new Error(err.detail || "Deletion failed");
+			throw new Error(err.detail || `Deletion failed (${res.status})`);
 		}
 		return await res.json();
 	},

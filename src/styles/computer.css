@@ -1,5 +1,13 @@
 /* My Computer / Sandbox View Styles */
 
+.page-computer .computer-layout {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	height: 100vh;
+	overflow: hidden;
+}
+
 .page-computer .computer-main {
 	display: flex;
 	flex-direction: column;
@@ -50,7 +58,9 @@
 }
 
 /* Empty Setup Card */
-.view-empty {
+.view-empty,
+.view-bootstrapping,
+.view-failed {
 	align-items: center;
 	justify-content: center;
 	padding: 1.5rem;

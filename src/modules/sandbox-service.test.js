@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { SandboxService } from "./sandbox-service.js";
 
 describe("SandboxService API Client", () => {
-	it("fetches sandbox status correctly", async () => {
+	it("fetches sandbox status correctly via /v1/sandbox/status", async () => {
 		const mockStatus = {
 			has_sandbox: true,
 			state: "ready",
@@ -19,6 +19,10 @@ describe("SandboxService API Client", () => {
 		expect(status.has_sandbox).toBe(true);
 		expect(status.state).toBe("ready");
 		expect(status.distribution).toBe("debian");
+		expect(global.fetch).toHaveBeenCalledWith(
+			expect.stringContaining("/v1/sandbox/status"),
+			expect.anything(),
+		);
 	});
 
 	it("provisions sandbox with parameters", async () => {
@@ -30,7 +34,7 @@ describe("SandboxService API Client", () => {
 		const res = await SandboxService.provision("ubuntu", "24.04");
 		expect(res.state).toBe("provisioning");
 		expect(global.fetch).toHaveBeenCalledWith(
-			expect.stringContaining("/sandbox/provision"),
+			expect.stringContaining("/v1/sandbox/provision"),
 			expect.objectContaining({
 				method: "POST",
 				body: JSON.stringify({
@@ -44,6 +48,7 @@ describe("SandboxService API Client", () => {
 	it("throws formatted error on failure", async () => {
 		global.fetch = vi.fn().mockResolvedValue({
 			ok: false,
+			status: 500,
 			json: async () => ({ detail: "Quota exceeded" }),
 		});
 

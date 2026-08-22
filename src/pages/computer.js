@@ -5,11 +5,12 @@
 
 import { toggleSidebar } from "../components/sidebar.js";
 import { bootApp } from "../main.js";
+import { apiUrl } from "../modules/apiFetch.js";
 import { SandboxService } from "../modules/sandbox-service.js";
 
 // DOM Elements
-let viewEmpty, viewTransition, viewReady;
-let sandboxBadge, connStatus;
+let viewBootstrapping, viewEmpty, viewTransition, viewReady, viewFailed;
+let sandboxBadge, connStatus, failedDesc;
 let termContainer;
 let terminal, fitAddon, socket;
 
@@ -18,9 +19,12 @@ async function init() {
 	if (!me) return;
 
 	// Bind Elements
+	viewBootstrapping = document.getElementById("viewBootstrapping");
 	viewEmpty = document.getElementById("viewEmpty");
 	viewTransition = document.getElementById("viewTransition");
 	viewReady = document.getElementById("viewReady");
+	viewFailed = document.getElementById("viewFailed");
+	failedDesc = document.getElementById("failedDesc");
 	sandboxBadge = document.getElementById("sandboxBadge");
 	connStatus = document.getElementById("connStatus");
 	termContainer = document.getElementById("terminalContainer");
@@ -93,6 +97,14 @@ function bindActions() {
 			}
 		});
 	}
+
+	const btnRetry = document.getElementById("btnRetry");
+	if (btnRetry) {
+		btnRetry.addEventListener("click", () => {
+			showView("bootstrapping");
+			checkStatus();
+		});
+	}
 }
 
 async function checkStatus() {
@@ -101,6 +113,11 @@ async function checkStatus() {
 		updateUI(status);
 	} catch (err) {
 		console.error("Status check failed", err);
+		showView("failed");
+		if (failedDesc)
+			failedDesc.textContent =
+				err.message || "Failed to contact sandbox backend.";
+		if (sandboxBadge) sandboxBadge.textContent = "Error";
 	}
 }
 
@@ -117,9 +134,11 @@ function updateUI(status) {
 			sandboxBadge.textContent = `${status.distribution} (Ready)`;
 		initTerminal();
 	} else if (status.state === "failed") {
-		showView("empty");
+		showView("failed");
+		if (failedDesc)
+			failedDesc.textContent =
+				status.last_error || "Sandbox provisioning failed.";
 		if (sandboxBadge) sandboxBadge.textContent = "Failed";
-		alert(`Sandbox error: ${status.last_error || "Unknown failure"}`);
 	} else {
 		showTransition(`Status: ${status.state}`, "Sandbox is transitioning...");
 		pollUntilReady();
@@ -127,10 +146,13 @@ function updateUI(status) {
 }
 
 function showView(view) {
+	if (viewBootstrapping)
+		viewBootstrapping.classList.toggle("hidden", view !== "bootstrapping");
 	if (viewEmpty) viewEmpty.classList.toggle("hidden", view !== "empty");
 	if (viewTransition)
 		viewTransition.classList.toggle("hidden", view !== "transition");
 	if (viewReady) viewReady.classList.toggle("hidden", view !== "ready");
+	if (viewFailed) viewFailed.classList.toggle("hidden", view !== "failed");
 }
 
 function showTransition(title, desc) {
@@ -143,10 +165,19 @@ function showTransition(title, desc) {
 
 function pollUntilReady() {
 	setTimeout(async () => {
-		const status = await SandboxService.getStatus();
-		if (status.state === "ready" || status.state === "failed") {
-			updateUI(status);
-		} else {
+		try {
+			const status = await SandboxService.getStatus();
+			if (
+				status.state === "ready" ||
+				status.state === "failed" ||
+				status.state === "none"
+			) {
+				updateUI(status);
+			} else {
+				pollUntilReady();
+			}
+		} catch (e) {
+			console.warn("Poll failed, retrying in 3s...", e);
 			pollUntilReady();
 		}
 	}, 2000);
@@ -155,7 +186,6 @@ function pollUntilReady() {
 function initTerminal() {
 	if (terminal || !termContainer) return;
 
-	// Check if xterm is available from global CDN script or fallback
 	if (window.Terminal) {
 		terminal = new window.Terminal({
 			theme: {
@@ -184,8 +214,8 @@ function initTerminal() {
 }
 
 function connectWebSocket() {
-	const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-	const wsUrl = `${protocol}//${window.location.host}/api/v1/sandbox/terminal/ws`;
+	const httpEndpoint = apiUrl("/v1/sandbox/terminal/ws");
+	const wsUrl = httpEndpoint.replace(/^http/, "ws");
 
 	if (connStatus) connStatus.textContent = "Connecting...";
 

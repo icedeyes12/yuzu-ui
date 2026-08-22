@@ -10,16 +10,15 @@
   <link rel="stylesheet" href="/src/styles/computer.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css">
 </head>
-<body class="theme-dark page-computer">
-  <div class="app-layout">
-    <!-- Shared Sidebar Navigation -->
-    <aside id="sidebar" class="sidebar"></aside>
+<body class="theme-dark page-computer" data-auth-state="loading">
+  <!-- Shared Sidebar Root -->
+  <div id="sidebarRoot"></div>
 
-    <!-- Main Content Canvas -->
+  <div class="page-layout computer-layout">
     <main class="computer-main">
       <header class="computer-header">
         <div class="header-left">
-          <button id="sidebarToggle" class="btn-icon" aria-label="Toggle Navigation">☰</button>
+          <button id="sidebarToggle" class="btn-icon" data-action="toggle-sidebar" aria-label="Toggle Navigation">☰</button>
           <h1>My Computer</h1>
           <span id="sandboxBadge" class="badge badge-neutral">Checking...</span>
         </div>
@@ -29,6 +28,15 @@
       </header>
 
       <section class="computer-content">
+        <!-- 0. Bootstrapping / Initial State -->
+        <div id="viewBootstrapping" class="computer-view view-bootstrapping">
+          <div class="card transition-card">
+            <div class="spinner"></div>
+            <h3>Connecting to Environment...</h3>
+            <p>Checking My Computer status and resources.</p>
+          </div>
+        </div>
+
         <!-- 1. Empty / Setup State -->
         <div id="viewEmpty" class="computer-view view-empty hidden">
           <div class="card setup-card">
@@ -81,6 +89,15 @@
 
           <!-- xterm.js Canvas Mount Point -->
           <div id="terminalContainer" class="terminal-container"></div>
+        </div>
+
+        <!-- 4. Error / Failed State -->
+        <div id="viewFailed" class="computer-view view-failed hidden">
+          <div class="card setup-card" style="text-align:center;">
+            <h2 style="color:var(--color-danger,#f85149);">Environment Unavailable</h2>
+            <p id="failedDesc" class="subtitle">An error occurred while loading your sandbox.</p>
+            <button id="btnRetry" class="btn btn-primary">Retry Status</button>
+          </div>
         </div>
       </section>
     </main>
