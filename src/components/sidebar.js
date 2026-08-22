@@ -57,6 +57,9 @@ function sidebarMarkup() {
       <a href="${chatUrl()}" class="sidebar-link chat-link" data-action="toggle-sidebar">
         <span class="sidebar-icon chat-icon" aria-hidden="true"></span> Chat
       </a>
+      <a href="/computer" class="sidebar-link computer-link" data-action="toggle-sidebar">
+        <span class="sidebar-icon computer-icon" aria-hidden="true"></span> My Computer
+      </a>
       <a href="${homeUrl()}" class="sidebar-link home-link" data-action="toggle-sidebar">
         <span class="sidebar-icon home-icon" aria-hidden="true"></span> Home
       </a>

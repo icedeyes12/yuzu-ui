@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>My Computer | Yuzu Companion</title>
+  <link rel="stylesheet" href="/src/styles/style.css">
+  <link rel="stylesheet" href="/src/styles/sidebar.css">
+  <link rel="stylesheet" href="/src/styles/theme.css">
+  <link rel="stylesheet" href="/src/styles/computer.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css">
+</head>
+<body class="theme-dark page-computer">
+  <div class="app-layout">
+    <!-- Shared Sidebar Navigation -->
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <!-- Main Content Canvas -->
+    <main class="computer-main">
+      <header class="computer-header">
+        <div class="header-left">
+          <button id="sidebarToggle" class="btn-icon" aria-label="Toggle Navigation">☰</button>
+          <h1>My Computer</h1>
+          <span id="sandboxBadge" class="badge badge-neutral">Checking...</span>
+        </div>
+        <div class="header-right" id="sandboxMeta">
+          <!-- Dynamic Status info -->
+        </div>
+      </header>
+
+      <section class="computer-content">
+        <!-- 1. Empty / Setup State -->
+        <div id="viewEmpty" class="computer-view view-empty hidden">
+          <div class="card setup-card">
+            <h2>Personal Execution Environment</h2>
+            <p class="subtitle">A dedicated persistent Linux sandbox for terminal tools, Python, packages, skills, and projects.</p>
+            
+            <form id="formProvision" class="setup-form">
+              <div class="form-group">
+                <label for="selectDistro">Linux Distribution</label>
+                <select id="selectDistro" class="input-select">
+                  <option value="debian" selected>Debian 12 (Recommended)</option>
+                  <option value="ubuntu">Ubuntu 24.04</option>
+                </select>
+              </div>
+
+              <div class="storage-info">
+                <span>Storage Quota:</span>
+                <strong>10 GiB Dedicated Environment</strong>
+              </div>
+
+              <div class="alert alert-info">
+                <small>Environment is persistent and separate from your 512 MiB Yuzu File Storage. Commands execute inside your isolated user space.</small>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block">Create My Computer</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- 2. Transition / Provisioning State -->
+        <div id="viewTransition" class="computer-view view-transition hidden">
+          <div class="card transition-card">
+            <div class="spinner"></div>
+            <h3 id="transitionTitle">Setting up Environment...</h3>
+            <p id="transitionDesc">Bootstrapping isolated Linux rootfs and setting up user workspace.</p>
+          </div>
+        </div>
+
+        <!-- 3. Ready / Active Terminal Surface -->
+        <div id="viewReady" class="computer-view view-ready hidden">
+          <div class="terminal-toolbar">
+            <div class="toolbar-left">
+              <span id="connStatus" class="status-indicator">Connecting...</span>
+            </div>
+            <div class="toolbar-right">
+              <button id="btnReset" class="btn btn-sm btn-outline-warning">Reset</button>
+              <button id="btnDelete" class="btn btn-sm btn-outline-danger">Delete</button>
+            </div>
+          </div>
+
+          <!-- xterm.js Canvas Mount Point -->
+          <div id="terminalContainer" class="terminal-container"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/src/pages/computer.js"></script>
+</body>
+</html>

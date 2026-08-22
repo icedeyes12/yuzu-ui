@@ -79,6 +79,7 @@ export default defineConfig({
 				home: entry("index.html"),
 				login: entry("login.html"),
 				chat: entry("chat.html"),
+				computer: entry("computer.html"),
 				config: entry("config.html"),
 				about: entry("about.html"),
 				preview: entry("preview-shell.html"),
