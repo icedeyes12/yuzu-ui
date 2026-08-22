@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { apiFetch, redirectToLogin } from "./apiFetch.js";
+import { apiFetch, apiUrl, redirectToLogin } from "./apiFetch.js";
 import { encodeByokConfig } from "./clientStorage.js";
 
 vi.mock("./clientStorage.js", () => ({
@@ -159,7 +159,7 @@ describe("apiFetch request", () => {
 		await expect(apiFetch("/v1/config")).resolves.toBe(response);
 
 		expect(fetchMock).toHaveBeenCalledWith(
-			"/v1/config",
+			apiUrl("/v1/config"),
 			expect.objectContaining({ credentials: "include" }),
 		);
 		expect(assign).not.toHaveBeenCalled();

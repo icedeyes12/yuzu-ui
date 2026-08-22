@@ -24,7 +24,7 @@ test("keeps the view anchored when older messages prepend", async ({
 	page,
 }) => {
 	// s-long seeds 60 messages so the container is genuinely scrollable.
-	await page.goto("/chat.html?session=s-long", {
+	await page.goto("/chat/s-long", {
 		waitUntil: "domcontentloaded",
 	});
 	await expect(page.getByText("Long message 01")).toBeVisible();

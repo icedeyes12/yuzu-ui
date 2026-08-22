@@ -31,7 +31,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 async function openSidebar(page) {
-	await page.goto("/chat.html", { waitUntil: "domcontentloaded" });
+	await page.goto("/chat", { waitUntil: "domcontentloaded" });
 	await page.waitForSelector("#hamburgerMenu");
 	await page.click("#hamburgerMenu");
 	await expect(page.locator("#mainSidebar")).toHaveClass(/open/);

@@ -24,7 +24,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 async function openChatPage(page) {
-	await page.goto("/chat.html", { waitUntil: "domcontentloaded" });
+	await page.goto("/chat", { waitUntil: "domcontentloaded" });
 	// The sidebar mounts after first paint (requestIdleCallback).
 	await page.waitForSelector("#mainSidebar");
 	// The overlay is CSS-hidden until the drawer opens — just needs to exist.

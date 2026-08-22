@@ -13,7 +13,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 async function openSidebarWithSessions(page) {
-	await page.goto("/chat.html", { waitUntil: "domcontentloaded" });
+	await page.goto("/chat", { waitUntil: "domcontentloaded" });
 	await expect(page.getByText("Hi! I'm Session One.")).toBeVisible();
 	await page.click("#hamburgerMenu");
 	await expect(page.locator("#mainSidebar.open")).toBeVisible();

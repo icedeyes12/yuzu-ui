@@ -28,12 +28,12 @@ describe("RouterManager.initFromURL", () => {
 		expect(router.isInitialized).toBe(true);
 	});
 
-	it("extracts the session id from the ?session= query parameter", () => {
+	it("ignores the removed ?session= query route", () => {
 		stubLocation({ pathname: "/chat", search: "?session=def-456" });
 		const router = new RouterManager();
 
-		expect(router.initFromURL()).toBe("def-456");
-		expect(router.currentSessionId).toBe("def-456");
+		expect(router.initFromURL()).toBeNull();
+		expect(router.currentSessionId).toBeNull();
 	});
 
 	it("returns null when no session is present", () => {

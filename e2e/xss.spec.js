@@ -25,7 +25,7 @@ test.beforeEach(async ({ page }) => {
 test("renders stored-XSS payloads inertly (no script, handler, or javascript: URL)", async ({
 	page,
 }) => {
-	await page.goto("/chat.html?session=s-xss", {
+	await page.goto("/chat/s-xss", {
 		waitUntil: "domcontentloaded",
 	});
 

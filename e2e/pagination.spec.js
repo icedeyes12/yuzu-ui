@@ -31,7 +31,7 @@ test.beforeEach(async ({ page }) => {
 test("loads older messages on scroll with an advancing cursor", async ({
 	page,
 }) => {
-	await page.goto("/chat.html", { waitUntil: "domcontentloaded" });
+	await page.goto("/chat", { waitUntil: "domcontentloaded" });
 	await expect(page.getByText("Hi! I'm Session One.")).toBeVisible();
 
 	// Round 1: scroll to top -> first older batch, cursor = oldest message

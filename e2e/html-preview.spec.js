@@ -23,7 +23,7 @@ test.beforeEach(async ({ page }) => {
 test("renders the html fence preview in the sandbox: content, scripts, auto-height", async ({
 	page,
 }) => {
-	await page.goto("/chat.html?session=s-html", {
+	await page.goto("/chat/s-html", {
 		waitUntil: "domcontentloaded",
 	});
 
@@ -56,7 +56,7 @@ test("renders the html fence preview in the sandbox: content, scripts, auto-heig
 test("unclosed html fence with a script still renders (source recovered from the code carrier)", async ({
 	page,
 }) => {
-	await page.goto("/chat.html?session=s-unclosed", {
+	await page.goto("/chat/s-unclosed", {
 		waitUntil: "domcontentloaded",
 	});
 

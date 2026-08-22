@@ -3,7 +3,7 @@
 
 /**
  * Handles URL-based session routing for shareable URLs.
- * Enables /chat?session=<uuid> style navigation without page reloads.
+ * Uses /chat/<public_id> as the canonical session URL.
  */
 export class RouterManager {
 	constructor() {
@@ -19,12 +19,6 @@ export class RouterManager {
 		const pathParts = window.location.pathname.split("/").filter((p) => p);
 		if (pathParts.length >= 2 && pathParts[0] === "chat") {
 			this.currentSessionId = pathParts[1];
-		} else {
-			const params = new URLSearchParams(window.location.search);
-			const sessionId = params.get("session");
-			if (sessionId) {
-				this.currentSessionId = sessionId;
-			}
 		}
 
 		this.isInitialized = true;
@@ -35,8 +29,7 @@ export class RouterManager {
 	/**
 	 * Update URL to reflect current session without page reload.
 	 * In SPA clean routing mode, standardizes on /chat/<session_id>.
-	 * Supports both /chat/<session_id> clean routes and /chat.html?session=<id>.
-	 * @param {string} sessionId - Session ID (e.g. ses_... or uuid) to set in URL
+	 * @param {string} sessionId - Public session ID (ses_...) to set in URL
 	 */
 	updateUrl(sessionId) {
 		if (!sessionId || sessionId === this.currentSessionId) return;
@@ -77,11 +70,6 @@ export class RouterManager {
 
 			if (pathParts.length >= 2 && pathParts[0] === "chat") {
 				sessionId = pathParts[1];
-			} else {
-				// Fallback to query string
-				const params = new URLSearchParams(window.location.search);
-				const fallbackSessionId = params.get("session");
-				if (fallbackSessionId) sessionId = fallbackSessionId;
 			}
 
 			if (sessionId !== this.currentSessionId) {
