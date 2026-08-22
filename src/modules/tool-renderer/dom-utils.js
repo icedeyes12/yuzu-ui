@@ -1,6 +1,8 @@
 // FILE: static/js/modules/tool-renderer/dom-utils.js
 // DESCRIPTION: Shared DOM/text helpers — canonical escapeHtml lives here.
 
+import { apiUrl } from "../apiFetch.js";
+
 export function escapeHtml(value) {
 	if (value === null || value === undefined) return "";
 	const str = String(value);
@@ -43,7 +45,7 @@ export function safeImagePath(value) {
 	) {
 		return null;
 	}
-	return `/v1/static/${directory}/${encodeURIComponent(filename)}`;
+	return apiUrl(`/v1/static/${directory}/${encodeURIComponent(filename)}`);
 }
 
 export function safeHttpUrl(value) {

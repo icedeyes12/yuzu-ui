@@ -144,7 +144,48 @@ describe("renderMessageContent iframe policy", () => {
 	});
 });
 
-// ── Streaming html-fence placeholder (unclosed fence with script) ────────────
+// ── Tool Result Event / Image Card Rendering ──────────────────────────────
+
+describe("renderMessageHTML tool image result", () => {
+	it("renders image card correctly for /api/v1/static/generated_images/... path", () => {
+		const html = renderMessageHTML({
+			role: "tool",
+			content: JSON.stringify({
+				ok: true,
+				name: "image_generate",
+				call_id: "call_123",
+				data: {
+					image_path: "/api/v1/static/generated_images/20260822_105426_test.png",
+					prompt: "a cute anime catgirl",
+					model: "flux-schnell",
+				},
+			}),
+		});
+		expect(html).toContain('class="tool-card tool-card--image"');
+		expect(html).toContain('src="/v1/static/generated_images/20260822_105426_test.png"');
+		expect(html).toContain('href="/v1/static/generated_images/20260822_105426_test.png"');
+		expect(html).toContain("a cute anime catgirl");
+		expect(html).toContain("flux-schnell");
+	});
+
+	it("renders image card correctly for /v1/static/generated_images/... path", () => {
+		const html = renderMessageHTML({
+			role: "tool",
+			content: JSON.stringify({
+				ok: true,
+				name: "image_generate",
+				call_id: "call_456",
+				data: {
+					image_path: "/v1/static/generated_images/20260822_105426_test2.png",
+					prompt: "cyberpunk city",
+				},
+			}),
+		});
+		expect(html).toContain('class="tool-card tool-card--image"');
+		expect(html).toContain('src="/v1/static/generated_images/20260822_105426_test2.png"');
+	});
+});
+
 // A streamed message whose html fence never closes renders as a pending
 // placeholder. Its data-fence-source is stripped by DOMPurify (values
 // containing closing script tags), so the source must survive as sanitizer-
